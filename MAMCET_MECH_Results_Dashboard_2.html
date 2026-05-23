@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAM College of Engineering — ME Department Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ec;--surface:#ffffff;--surface2:#faf9f6;--border:#e2ddd6;--text:#1a1714;--text2:#6b635a;--text3:#9c9189;--accent:#c0392b;--gold:#d4a017;--green:#2d6a4f;--green-light:#e8f5ee;--amber:#d97706;--amber-light:#fef3c7;--red-light:#fee2e2;--blue:#1e3a5f;--blue-light:#e8f0fa;--shadow:0 1px 3px rgba(0,0,0,0.08);--shadow-md:0 4px 6px rgba(0,0,0,0.07);--radius:10px;--radius-lg:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:var(--blue);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.header-inner{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;gap:1.5rem}
+.logo-block{padding:0.9rem 0;border-right:1px solid rgba(255,255,255,0.15);padding-right:1.5rem}
+.logo-block .college{font-family:'Playfair Display',serif;font-size:1.05rem;color:#fff;line-height:1.2}
+.logo-block .dept{font-size:0.7rem;color:rgba(255,255,255,0.6);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px}
+.nav-links{display:flex;gap:0.2rem;flex:1}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;font-size:0.8rem;padding:0.45rem 0.8rem;border-radius:6px;cursor:pointer;transition:all 0.15s}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.12);color:#fff}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:0.7rem;color:rgba(255,255,255,0.85);white-space:nowrap}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.main{max-width:1400px;margin:0 auto;padding:1.75rem 2rem}
+.section{display:none}.section.active{display:block}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1rem;margin-bottom:1.75rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform 0.15s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.stat-card:nth-child(2)::before{background:var(--gold)}
+.stat-card:nth-child(3)::before{background:var(--green)}
+.stat-card:nth-child(4)::before{background:var(--blue)}
+.stat-card:nth-child(5)::before{background:#7c3aed}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-weight:500;margin-bottom:0.4rem}
+.stat-val{font-size:2rem;font-weight:600;color:var(--text);line-height:1;font-family:'DM Mono',monospace}
+.stat-sub{font-size:0.7rem;color:var(--text2);margin-top:0.3rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.4rem;box-shadow:var(--shadow)}
+.chart-title{font-size:0.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1rem}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:0.75rem}
+.sec-title{font-size:0.95rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:0.5rem}
+.sec-title::before{content:'';width:4px;height:16px;background:var(--accent);border-radius:2px}
+.controls{display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;box-shadow:var(--shadow)}
+.ctrl-grp{display:flex;flex-direction:column;gap:3px}
+.ctrl-grp label{font-size:0.67rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);font-weight:500}
+select,input[type=text]{font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:0.42rem 0.8rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none}
+select:focus,input[type=text]:focus{border-color:var(--blue)}
+.batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem}
+.batch-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;box-shadow:var(--shadow)}
+.batch-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.batch-year{font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--text)}
+.batch-count{font-size:1.2rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);text-align:right}
+.batch-lbl{font-size:0.68rem;color:var(--text3);text-align:right}
+.bar-bg{background:var(--bg);border-radius:4px;height:8px;overflow:hidden;margin:0.5rem 0 0.3rem}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.bar-meta{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text2)}
+.batch-pills{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.65rem}
+.pill{font-size:0.67rem;padding:2px 8px;border-radius:20px;font-weight:500}
+.pill-green{background:var(--green-light);color:var(--green)}
+.pill-amber{background:var(--amber-light);color:var(--amber)}
+.pill-red{background:var(--red-light);color:#b91c1c}
+.pill-blue{background:var(--blue-light);color:var(--blue)}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:0.83rem}
+thead{background:var(--blue)}
+thead th{padding:0.8rem 1rem;text-align:left;color:rgba(255,255,255,0.92);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;font-weight:500;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:0.7rem 1rem;color:var(--text);vertical-align:middle}
+td.mono{font-family:'DM Mono',monospace;font-size:0.79rem}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:0.68rem;font-weight:600}
+.rank-1{background:#fde68a;color:#92400e}
+.rank-2{background:#e5e7eb;color:#374151}
+.rank-3{background:#fed7aa;color:#92400e}
+.rank-n{background:var(--bg);color:var(--text3);font-size:0.65rem}
+.gpa-bar{display:flex;align-items:center;gap:0.5rem}
+.gpa-track{flex:1;max-width:75px;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.gpa-fill{height:100%;border-radius:3px}
+.gpa-num{font-family:'DM Mono',monospace;font-size:0.8rem;font-weight:500;min-width:34px}
+.sp{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.68rem;font-weight:500}
+.sp-pass{background:var(--green-light);color:var(--green)}
+.sp-fail{background:var(--red-light);color:#b91c1c}
+.pagination{display:flex;align-items:center;gap:0.5rem;margin-top:1rem;flex-wrap:wrap}
+.page-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.7rem;font-size:0.77rem;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.1s}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-info{font-size:0.75rem;color:var(--text3)}
+.top-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem}
+.top-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;box-shadow:var(--shadow);display:flex;gap:1rem;align-items:flex-start;transition:transform 0.15s}
+.top-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.medal{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.medal-1{background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.medal-2{background:linear-gradient(135deg,#d1d5db,#9ca3af)}
+.medal-3{background:linear-gradient(135deg,#fb923c,#f97316)}
+.medal-n{background:var(--bg);font-size:0.82rem;color:var(--text2)}
+.top-name{font-size:0.88rem;font-weight:600;color:var(--text)}
+.top-reg{font-size:0.7rem;color:var(--text3);font-family:'DM Mono',monospace;margin-top:1px}
+.top-gpa{font-size:1.4rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--blue);margin-top:7px}
+.top-gpa-lbl{font-size:0.67rem;color:var(--text3)}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:1rem;margin-bottom:1.75rem}
+.report-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;box-shadow:var(--shadow);cursor:pointer;transition:all 0.15s;text-align:left;width:100%;font-family:'DM Sans',sans-serif}
+.report-card:hover{border-color:var(--blue);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.report-icon{font-size:1.4rem;margin-bottom:0.65rem}
+.report-name{font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:0.3rem}
+.report-desc{font-size:0.74rem;color:var(--text2);line-height:1.5}
+.dl-btn{display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.8rem;font-size:0.74rem;font-weight:600;color:var(--blue);background:var(--blue-light);padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.gen-btn{font-family:'DM Sans',sans-serif;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0.48rem 1.2rem;font-size:0.82rem;font-weight:500;cursor:pointer;transition:background 0.15s}
+.gen-btn:hover{background:#142c4f}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--text);color:#fff;padding:0.7rem 1.2rem;border-radius:10px;font-size:0.82rem;display:none;z-index:9999;box-shadow:var(--shadow-md)}
+.toast.show{display:block}
+.empty-state{text-align:center;padding:3rem;color:var(--text3);font-size:0.88rem}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}.main{padding:1rem}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <div class="college">MAM College of Engineering &amp; Technology</div>
+      <div class="dept">B.E. Mechanical Engineering &middot; Dept 114 &middot; College 8120 &middot; Anna University</div>
+    </div>
+    <nav class="nav-links">
+      <button class="nav-btn active" onclick="showTab(this,'overview')">Overview</button>
+      <button class="nav-btn" onclick="showTab(this,'batches')">Batch Analysis</button>
+      <button class="nav-btn" onclick="showTab(this,'students')">All Students</button>
+      <button class="nav-btn" onclick="showTab(this,'toppers')">Toppers</button>
+      <button class="nav-btn" onclick="showTab(this,'reports')">&#128196; Reports</button>
+    </nav>
+    <div class="live-badge"><span class="live-dot"></span>Live &middot; 16 PDFs &middot; AY 2020-26</div>
+  </div>
+</header>
+
+<main class="main">
+
+<section class="section active" id="tab-overview">
+  <div class="summary-row" id="ov-stats"></div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Pass rate by batch (%)</div>
+      <div style="position:relative;height:230px"><canvas id="chart-batch-pass"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Students per batch</div>
+      <div style="position:relative;height:230px"><canvas id="chart-students"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Semester-wise pass % &amp; avg GPA &mdash; select batch:
+      <select id="ov-batch-sel" onchange="renderSemChart()" style="margin-left:0.5rem"></select>
+    </div>
+    <div style="position:relative;height:210px"><canvas id="chart-sem"></canvas></div>
+  </div>
+</section>
+
+<section class="section" id="tab-batches">
+  <div class="sec-hd">
+    <div class="sec-title">Batch-wise performance</div>
+    <select id="batch-sort" onchange="renderBatchCards()">
+      <option value="year">Sort: by year</option>
+      <option value="pass">Sort: pass rate</option>
+      <option value="count">Sort: student count</option>
+    </select>
+  </div>
+  <div class="batch-grid" id="batch-grid"></div>
+</section>
+
+<section class="section" id="tab-students">
+  <div class="controls">
+    <div class="ctrl-grp"><label>Batch</label>
+      <select id="st-batch" onchange="filterStudents()"><option value="">All batches</option></select>
+    </div>
+    <div class="ctrl-grp"><label>Status</label>
+      <select id="st-status" onchange="filterStudents()">
+        <option value="">All</option>
+        <option value="allclear">All-clear</option>
+        <option value="arrear">Has arrears</option>
+      </select>
+    </div>
+    <div class="ctrl-grp"><label>Min GPA</label>
+      <select id="st-gpa" onchange="filterStudents()">
+        <option value="0">Any GPA</option>
+        <option value="9">&#8805; 9.0</option>
+        <option value="8">&#8805; 8.0</option>
+        <option value="7.5">&#8805; 7.5</option>
+        <option value="7">&#8805; 7.0</option>
+        <option value="6">&#8805; 6.0</option>
+      </select>
+    </div>
+    <div class="ctrl-grp"><label>Search</label>
+      <input type="text" id="st-search" placeholder="Name or Reg No&hellip;" oninput="filterStudents()" style="width:190px">
+    </div>
+    <button class="gen-btn" onclick="exportFilteredPDF()">&#8595; Export PDF</button>
+  </div>
+  <div id="st-count" style="font-size:0.78rem;color:var(--text3);margin-bottom:0.75rem"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Register No.</th><th>Name</th><th>Batch</th><th>Sems</th><th>Avg GPA</th><th>Status</th></tr></thead>
+      <tbody id="st-tbody"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="st-pages"></div>
+</section>
+
+<section class="section" id="tab-toppers">
+  <div class="controls">
+    <div class="ctrl-grp"><label>Batch</label>
+      <select id="top-batch" onchange="renderToppers()"><option value="">All batches</option></select>
+    </div>
+    <div class="ctrl-grp"><label>Show top</label>
+      <select id="top-n" onchange="renderToppers()">
+        <option value="3">Top 3</option><option value="5">Top 5</option><option value="10">Top 10</option>
+      </select>
+    </div>
+    <button class="gen-btn" onclick="exportToppersPDF()">&#8595; Export PDF</button>
+  </div>
+  <div id="toppers-area"></div>
+</section>
+
+<section class="section" id="tab-reports">
+  <p style="font-size:0.84rem;color:var(--text2);margin-bottom:1.5rem">Click any report card to instantly generate and download a PDF from all 16 official result PDFs (AY 2020-2026).</p>
+  <div class="report-grid">
+    <button class="report-card" onclick="report_allclear()">
+      <div class="report-icon">&#127942;</div>
+      <div class="report-name">All-Clear Students</div>
+      <div class="report-desc">Students who passed every semester with no arrears, batch-wise listing with GPA.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_highgpa()">
+      <div class="report-icon">&#11088;</div>
+      <div class="report-name">High GPA &ge; 7.5</div>
+      <div class="report-desc">All students with cumulative average GPA 7.5 and above, grouped by batch.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_top3()">
+      <div class="report-icon">&#129351;</div>
+      <div class="report-name">Top 3 Per Batch</div>
+      <div class="report-desc">Gold, silver and bronze performers for each joining batch by average GPA.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_outstanding()">
+      <div class="report-icon">&#128142;</div>
+      <div class="report-name">Outstanding (GPA &ge; 9.0)</div>
+      <div class="report-desc">Students with exceptional academic performance, GPA 9.0 and above.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_arrear()">
+      <div class="report-icon">&#9888;&#65039;</div>
+      <div class="report-name">Students with Arrears</div>
+      <div class="report-desc">Students who failed at least one semester exam, batch-wise detailed list.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_semwise()">
+      <div class="report-icon">&#128202;</div>
+      <div class="report-name">Semester-wise Summary</div>
+      <div class="report-desc">Pass/fail count and percentage for every semester across all batches.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_batchwise()">
+      <div class="report-icon">&#128203;</div>
+      <div class="report-name">Batch Consolidated</div>
+      <div class="report-desc">Full snapshot per batch: strength, pass rate, avg GPA, top performer.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+    <button class="report-card" onclick="report_gpa_dist()">
+      <div class="report-icon">&#128200;</div>
+      <div class="report-name">GPA Distribution</div>
+      <div class="report-desc">Student count across GPA bands: O, A+, A, B+, B, C and below.</div>
+      <div class="dl-btn">&#8595; Generate PDF</div>
+    </button>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.4rem;box-shadow:var(--shadow)">
+    <div class="sec-title" style="margin-bottom:1rem">Custom Report</div>
+    <div class="controls" style="margin-bottom:0">
+      <div class="ctrl-grp"><label>Batch</label>
+        <select id="rpt-batch"><option value="">All batches</option></select>
+      </div>
+      <div class="ctrl-grp"><label>Filter</label>
+        <select id="rpt-filter">
+          <option value="all">All students</option>
+          <option value="allclear">All-clear only</option>
+          <option value="7.5">GPA &ge; 7.5</option>
+          <option value="8">GPA &ge; 8.0</option>
+          <option value="9">GPA &ge; 9.0</option>
+        </select>
+      </div>
+      <button class="gen-btn" onclick="report_custom()">&#8595; Generate PDF</button>
+    </div>
+  </div>
+</section>
+
+</main>
+<div class="toast" id="toast">Generating PDF...</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const RAW = {"students":[{"reg":"812015114719","name":"ESHWA","batch":"2015","avg_gpa":7.12,"all_clear":false,"sem_count":8},{"reg":"812015114006","name":"ANANTHKUMAR K","batch":"2015","avg_gpa":7.0,"all_clear":true,"sem_count":1},{"reg":"812015114301","name":"ABEL AJITH THABU","batch":"2015","avg_gpa":7.0,"all_clear":true,"sem_count":1},{"reg":"812015114716","name":"MANIKANDAN R","batch":"2015","avg_gpa":6.7,"all_clear":false,"sem_count":8},{"reg":"812015114021","name":"DHILIPAN M","batch":"2015","avg_gpa":6.62,"all_clear":false,"sem_count":7},{"reg":"812015114703","name":"MANIKANDAN","batch":"2015","avg_gpa":6.46,"all_clear":false,"sem_count":8},{"reg":"812015114094","name":"VIJAY V","batch":"2015","avg_gpa":6.43,"all_clear":false,"sem_count":7},{"reg":"812015114304","name":"BURUSHLERAJ","batch":"2015","avg_gpa":6.26,"all_clear":false,"sem_count":6},{"reg":"812015114098","name":"WASIM AKRAM","batch":"2015","avg_gpa":6.0,"all_clear":false,"sem_count":8},{"reg":"812015114715","name":"AJITH","batch":"2015","avg_gpa":6.0,"all_clear":true,"sem_count":2},{"reg":"812015114072","name":"RAMANATHAN R","batch":"2015","avg_gpa":6.0,"all_clear":true,"sem_count":1},{"reg":"812015114040","name":"KALAILINGAM K","batch":"2015","avg_gpa":5.98,"all_clear":false,"sem_count":6},{"reg":"812015114713","name":"VETRIVEL R","batch":"2015","avg_gpa":5.0,"all_clear":true,"sem_count":1},{"reg":"812015114058","name":"NIJANTHAN K","batch":"2015","avg_gpa":5.0,"all_clear":true,"sem_count":1},{"reg":"812016114074","name":"UMANATH M","batch":"2016","avg_gpa":8.0,"all_clear":true,"sem_count":1},{"reg":"812016114076","name":"VELMURUGAN V","batch":"2016","avg_gpa":8.0,"all_clear":true,"sem_count":1},{"reg":"812016114701","name":"ABISHEKKUMAR R","batch":"2016","avg_gpa":8.0,"all_clear":true,"sem_count":1},{"reg":"812016114501","name":"RANJITH R","batch":"2016","avg_gpa":7.57,"all_clear":false,"sem_count":7},{"reg":"812016114355","name":"YUVAN SANKAR","batch":"2016","avg_gpa":7.5,"all_clear":false,"sem_count":1},{"reg":"812016114344","name":"SARAVANAN G","batch":"2016","avg_gpa":7.37,"all_clear":true,"sem_count":5},{"reg":"812016114353","name":"VIVEK GNANARAJ","batch":"2016","avg_gpa":7.0,"all_clear":false,"sem_count":1},{"reg":"812016114342","name":"RAJA T","batch":"2016","avg_gpa":6.5,"all_clear":true,"sem_count":2},{"reg":"812016114059","name":"RAJA SEKAR","batch":"2016","avg_gpa":6.5,"all_clear":false,"sem_count":3},{"reg":"812016114010","name":"ARAVINDH","batch":"2016","avg_gpa":6.5,"all_clear":true,"sem_count":1},{"reg":"812016114706","name":"NAGA MARI MUTHU","batch":"2016","avg_gpa":6.5,"all_clear":false,"sem_count":1},{"reg":"812016114902","name":"SARAVANAN P","batch":"2016","avg_gpa":6.24,"all_clear":false,"sem_count":5},{"reg":"812016114038","name":"MANOJ M","batch":"2016","avg_gpa":6.0,"all_clear":true,"sem_count":1},{"reg":"812016114304","name":"AKASH K","batch":"2016","avg_gpa":6.0,"all_clear":true,"sem_count":1},{"reg":"812016114060","name":"RAJKUMAR R","batch":"2016","avg_gpa":5.67,"all_clear":true,"sem_count":6},{"reg":"812016114018","name":"DHIVAGAR P","batch":"2016","avg_gpa":5.52,"all_clear":false,"sem_count":5},{"reg":"812016114062","name":"SELVA G","batch":"2016","avg_gpa":5.5,"all_clear":true,"sem_count":3},{"reg":"812016114036","name":"MAGESHWARAN","batch":"2016","avg_gpa":4.5,"all_clear":false,"sem_count":2},{"reg":"812016114302","name":"ABULAMRISH","batch":"2016","avg_gpa":3.0,"all_clear":false,"sem_count":1},{"reg":"812017114030","name":"DINESH KUMAR M","batch":"2017","avg_gpa":9.66,"all_clear":true,"sem_count":2},{"reg":"812017114336","name":"THIRUPATHI R","batch":"2017","avg_gpa":9.66,"all_clear":true,"sem_count":2},{"reg":"812017114009","name":"AKASH T","batch":"2017","avg_gpa":9.5,"all_clear":true,"sem_count":2},{"reg":"812017114018","name":"ARUNKUMAR V","batch":"2017","avg_gpa":9.5,"all_clear":true,"sem_count":2},{"reg":"812017114021","name":"BALAJI R","batch":"2017","avg_gpa":9.5,"all_clear":true,"sem_count":2},{"reg":"812017114001","name":"AASHIK AHAMED J","batch":"2017","avg_gpa":9.41,"all_clear":true,"sem_count":2},{"reg":"812017114082","name":"RAJKUMAR V","batch":"2017","avg_gpa":9.41,"all_clear":true,"sem_count":2},{"reg":"812017114311","name":"HARIHARASUDHAN J","batch":"2017","avg_gpa":9.34,"all_clear":true,"sem_count":2},{"reg":"812017114028","name":"DINESH M","batch":"2017","avg_gpa":9.25,"all_clear":true,"sem_count":2},{"reg":"812017114705","name":"VIJAY V","batch":"2017","avg_gpa":9.09,"all_clear":true,"sem_count":2},{"reg":"812017114020","name":"BAKEERATHAN N","batch":"2017","avg_gpa":9.0,"all_clear":true,"sem_count":2},{"reg":"812017114034","name":"GOKUL RAJ P","batch":"2017","avg_gpa":9.0,"all_clear":true,"sem_count":2},{"reg":"812017114083","name":"RAMAR K","batch":"2017","avg_gpa":9.0,"all_clear":true,"sem_count":2},{"reg":"812017114041","name":"ILAVARASAN","batch":"2017","avg_gpa":8.88,"all_clear":false,"sem_count":2},{"reg":"812017114032","name":"EZHILARASAN T","batch":"2017","avg_gpa":8.84,"all_clear":true,"sem_count":2},{"reg":"812017114038","name":"HARIHARAN K","batch":"2017","avg_gpa":8.84,"all_clear":true,"sem_count":2},{"reg":"812017114057","name":"MANIKANDAN","batch":"2017","avg_gpa":8.75,"all_clear":false,"sem_count":2},{"reg":"812017114704","name":"MATHIVANAN","batch":"2017","avg_gpa":8.72,"all_clear":true,"sem_count":3},{"reg":"812017114008","name":"AKASH R","batch":"2017","avg_gpa":8.71,"all_clear":true,"sem_count":3},{"reg":"812017114039","name":"HARI PRAKASH M","batch":"2017","avg_gpa":8.66,"all_clear":true,"sem_count":2},{"reg":"812017114050","name":"KAVENKISHOOR R","batch":"2017","avg_gpa":8.66,"all_clear":true,"sem_count":2},{"reg":"812017114109","name":"VENKATESAN N","batch":"2017","avg_gpa":8.66,"all_clear":true,"sem_count":2},{"reg":"812017114114","name":"YOGABALAN T","batch":"2017","avg_gpa":8.66,"all_clear":true,"sem_count":2},{"reg":"812017114031","name":"DURAISELVAM R","batch":"2017","avg_gpa":8.59,"all_clear":true,"sem_count":2},{"reg":"812017114084","name":"RANJITH KUMAR R","batch":"2017","avg_gpa":8.5,"all_clear":true,"sem_count":3},{"reg":"812017114043","name":"JAYAPRAKASH K","batch":"2017","avg_gpa":8.44,"all_clear":true,"sem_count":3},{"reg":"812017114004","name":"ABDUL VASIM","batch":"2017","avg_gpa":8.41,"all_clear":false,"sem_count":2},{"reg":"812017114026","name":"DHILIPKUMAR K","batch":"2017","avg_gpa":8.41,"all_clear":true,"sem_count":2},{"reg":"812017114049","name":"KARUKUVEL RAJA G","batch":"2017","avg_gpa":8.41,"all_clear":true,"sem_count":2},{"reg":"812017114091","name":"SASI KUMAR M","batch":"2017","avg_gpa":8.41,"all_clear":true,"sem_count":2},{"reg":"812017114003","name":"ABDUL SAMMIR","batch":"2017","avg_gpa":8.34,"all_clear":true,"sem_count":2},{"reg":"812017114051","name":"KAVIN K","batch":"2017","avg_gpa":8.34,"all_clear":true,"sem_count":2},{"reg":"812017114062","name":"MOHAMED ASHRAF","batch":"2017","avg_gpa":8.34,"all_clear":false,"sem_count":2},{"reg":"812017114040","name":"HARISHRAJ","batch":"2017","avg_gpa":8.29,"all_clear":false,"sem_count":2},{"reg":"812017114048","name":"KARTHIKEYAN","batch":"2017","avg_gpa":8.29,"all_clear":false,"sem_count":2},{"reg":"812017114010","name":"ANANDHA STALIN J","batch":"2017","avg_gpa":8.28,"all_clear":true,"sem_count":3},{"reg":"812017114330","name":"PRASANTH V","batch":"2017","avg_gpa":8.28,"all_clear":true,"sem_count":3},{"reg":"812017114065","name":"MUKESH K","batch":"2017","avg_gpa":8.25,"all_clear":true,"sem_count":2},{"reg":"812017114090","name":"SASI KUMAR K","batch":"2017","avg_gpa":8.25,"all_clear":true,"sem_count":2},{"reg":"812017114053","name":"KISHORE K","batch":"2017","avg_gpa":8.22,"all_clear":true,"sem_count":3},{"reg":"812017114102","name":"SURYA K","batch":"2017","avg_gpa":8.21,"all_clear":true,"sem_count":3},{"reg":"812017114066","name":"MUKESHRAJ M","batch":"2017","avg_gpa":8.2,"all_clear":true,"sem_count":6},{"reg":"812017114064","name":"MOHAN","batch":"2017","avg_gpa":8.19,"all_clear":true,"sem_count":2},{"reg":"812017114027","name":"DHILIPKUMAR R","batch":"2017","avg_gpa":8.17,"all_clear":true,"sem_count":4},{"reg":"812017114033","name":"GIRITHARAN R","batch":"2017","avg_gpa":8.16,"all_clear":true,"sem_count":2},{"reg":"812017114095","name":"SHAFICK MOHAMED M","batch":"2017","avg_gpa":8.16,"all_clear":true,"sem_count":2},{"reg":"812017114112","name":"VIJAY R","batch":"2017","avg_gpa":8.14,"all_clear":true,"sem_count":2},{"reg":"812017114002","name":"ABDULLATHIF","batch":"2017","avg_gpa":8.12,"all_clear":false,"sem_count":2},{"reg":"812017114093","name":"SATHISH","batch":"2017","avg_gpa":8.12,"all_clear":false,"sem_count":2},{"reg":"812017114044","name":"JEGAN","batch":"2017","avg_gpa":8.11,"all_clear":true,"sem_count":3},{"reg":"812017114036","name":"GOWTHAM P","batch":"2017","avg_gpa":8.09,"all_clear":true,"sem_count":2},{"reg":"812017114702","name":"JANARTHANAN K","batch":"2017","avg_gpa":8.09,"all_clear":true,"sem_count":2},{"reg":"812017114013","name":"ARAVINTH G","batch":"2017","avg_gpa":8.08,"all_clear":true,"sem_count":4},{"reg":"812017114054","name":"LOGANATHAN K","batch":"2017","avg_gpa":8.08,"all_clear":true,"sem_count":6},{"reg":"812017114068","name":"MUTHU SAMY T","batch":"2017","avg_gpa":8.04,"all_clear":true,"sem_count":7},{"reg":"812017114011","name":"ANANTHARAJ","batch":"2017","avg_gpa":8.03,"all_clear":true,"sem_count":3},{"reg":"812017114023","name":"CHOKKALINGAM","batch":"2017","avg_gpa":8.0,"all_clear":false,"sem_count":2},{"reg":"812017114326","name":"NAVEEN R","batch":"2017","avg_gpa":8.0,"all_clear":true,"sem_count":2},{"reg":"812017114088","name":"SANJAY SRIKANTH","batch":"2017","avg_gpa":7.97,"all_clear":false,"sem_count":3},{"reg":"812017114099","name":"SUHAIL AHAMED","batch":"2017","avg_gpa":7.93,"all_clear":true,"sem_count":2},{"reg":"812017114047","name":"KARTHIKEYAN M","batch":"2017","avg_gpa":7.92,"all_clear":true,"sem_count":2},{"reg":"812017114060","name":"MAYILVAGANAN M","batch":"2017","avg_gpa":7.92,"all_clear":true,"sem_count":2},{"reg":"812017114322","name":"MANIKANDAN","batch":"2017","avg_gpa":7.92,"all_clear":false,"sem_count":2},{"reg":"812017114335","name":"THIRUNAVUKARASU P","batch":"2017","avg_gpa":7.88,"all_clear":true,"sem_count":4},{"reg":"812017114012","name":"ARAVINTH","batch":"2017","avg_gpa":7.88,"all_clear":true,"sem_count":2},{"reg":"812017114025","name":"DHARSHAN","batch":"2017","avg_gpa":7.88,"all_clear":false,"sem_count":2},{"reg":"812017114056","name":"MAHESWARAN","batch":"2017","avg_gpa":7.88,"all_clear":false,"sem_count":2},{"reg":"812017114105","name":"THANGADURAI M","batch":"2017","avg_gpa":7.87,"all_clear":true,"sem_count":4},{"reg":"812017114072","name":"PIRAISOODAN","batch":"2017","avg_gpa":7.83,"all_clear":false,"sem_count":2},{"reg":"812017114075","name":"PREMKUMAR P","batch":"2017","avg_gpa":7.83,"all_clear":true,"sem_count":2},{"reg":"812017114096","name":"SRIDHAR M","batch":"2017","avg_gpa":7.83,"all_clear":true,"sem_count":2},{"reg":"812017114318","name":"MAHESH KUMAR P","batch":"2017","avg_gpa":7.83,"all_clear":true,"sem_count":2},{"reg":"812017114338","name":"VINOTH","batch":"2017","avg_gpa":7.83,"all_clear":true,"sem_count":3},{"reg":"812017114703","name":"BALAJI P","batch":"2017","avg_gpa":7.83,"all_clear":true,"sem_count":2},{"reg":"812017114019","name":"ASHOK","batch":"2017","avg_gpa":7.79,"all_clear":true,"sem_count":2},{"reg":"812017114016","name":"ARUN KUMAR P","batch":"2017","avg_gpa":7.75,"all_clear":true,"sem_count":2},{"reg":"812017114022","name":"BHUVADEESAN","batch":"2017","avg_gpa":7.75,"all_clear":false,"sem_count":2},{"reg":"812017114076","name":"PRISHTIYA","batch":"2017","avg_gpa":7.75,"all_clear":false,"sem_count":2},{"reg":"812017114100","name":"SURENDRAN R","batch":"2017","avg_gpa":7.75,"all_clear":true,"sem_count":2},{"reg":"812017114104","name":"TAMIL SELVAN P","batch":"2017","avg_gpa":7.75,"all_clear":true,"sem_count":2},{"reg":"812017114305","name":"COSTA DONALD","batch":"2017","avg_gpa":7.75,"all_clear":true,"sem_count":2},{"reg":"812017114079","name":"RAJESH","batch":"2017","avg_gpa":7.71,"all_clear":true,"sem_count":2},{"reg":"812017114029","name":"DINESH T","batch":"2017","avg_gpa":7.67,"all_clear":true,"sem_count":3},{"reg":"812017114332","name":"RAMESH P","batch":"2017","avg_gpa":7.67,"all_clear":true,"sem_count":4},{"reg":"812017114086","name":"ROHAN GANESH","batch":"2017","avg_gpa":7.61,"all_clear":true,"sem_count":4},{"reg":"812017114113","name":"VIVEK M","batch":"2017","avg_gpa":7.6,"all_clear":true,"sem_count":2},{"reg":"812017114069","name":"NAVATHEESH","batch":"2017","avg_gpa":7.56,"all_clear":true,"sem_count":2},{"reg":"812017114303","name":"BILAL AHAMMED","batch":"2017","avg_gpa":7.56,"all_clear":false,"sem_count":3},{"reg":"812017114073","name":"PRABAKARAN","batch":"2017","avg_gpa":7.54,"all_clear":true,"sem_count":2},{"reg":"812017114024","name":"DARWIN","batch":"2017","avg_gpa":7.5,"all_clear":true,"sem_count":4},{"reg":"812017114094","name":"SATHISH KUMAR","batch":"2017","avg_gpa":7.5,"all_clear":false,"sem_count":4},{"reg":"812017114111","name":"VIGNESH","batch":"2017","avg_gpa":7.5,"all_clear":false,"sem_count":2},{"reg":"812017114014","name":"ARUL GANESH","batch":"2017","avg_gpa":7.47,"all_clear":true,"sem_count":3},{"reg":"812017114103","name":"TAMILARASAN R","batch":"2017","avg_gpa":7.45,"all_clear":true,"sem_count":2},{"reg":"812017114108","name":"VEERABHARATHI K","batch":"2017","avg_gpa":7.44,"all_clear":true,"sem_count":3},{"reg":"812017114106","name":"THIRUMENINATHAN R","batch":"2017","avg_gpa":7.42,"all_clear":true,"sem_count":4},{"reg":"812017114005","name":"ABISHEK","batch":"2017","avg_gpa":7.42,"all_clear":true,"sem_count":2},{"reg":"812017114061","name":"MOHAMED ABTHAYIR K","batch":"2017","avg_gpa":7.39,"all_clear":true,"sem_count":3},{"reg":"812017114701","name":"PRASATH R","batch":"2017","avg_gpa":7.27,"all_clear":true,"sem_count":2},{"reg":"812017114078","name":"RAJADURAI K","batch":"2017","avg_gpa":7.17,"all_clear":true,"sem_count":6},{"reg":"812017114085","name":"REX","batch":"2017","avg_gpa":6.78,"all_clear":false,"sem_count":3},{"reg":"812017114045","name":"JOHNSON SOWNDAR","batch":"2017","avg_gpa":6.53,"all_clear":true,"sem_count":5},{"reg":"812017114087","name":"SABINESH","batch":"2017","avg_gpa":6.28,"all_clear":true,"sem_count":4},{"reg":"812017114037","name":"GUNALAN","batch":"2017","avg_gpa":5.62,"all_clear":false,"sem_count":3},{"reg":"812017114042","name":"JAIAKASHRAJ","batch":"2017","avg_gpa":4.68,"all_clear":false,"sem_count":5},{"reg":"812017114313","name":"JUSTIN PAULRAJ","batch":"2017","avg_gpa":1.88,"all_clear":false,"sem_count":1},{"reg":"812018114003","name":"ABINASH M","batch":"2018","avg_gpa":8.99,"all_clear":true,"sem_count":4},{"reg":"812018114041","name":"SURYA K","batch":"2018","avg_gpa":8.91,"all_clear":true,"sem_count":4},{"reg":"812018114007","name":"BALAJI P","batch":"2018","avg_gpa":8.82,"all_clear":true,"sem_count":4},{"reg":"812018114002","name":"ABDUL RAHAMAN","batch":"2018","avg_gpa":8.71,"all_clear":false,"sem_count":4},{"reg":"812018114015","name":"GOWTHAMAN K","batch":"2018","avg_gpa":8.7,"all_clear":true,"sem_count":4},{"reg":"812018114013","name":"GOPINATH M","batch":"2018","avg_gpa":8.67,"all_clear":true,"sem_count":4},{"reg":"812018114040","name":"SUNDARESAN K","batch":"2018","avg_gpa":8.61,"all_clear":true,"sem_count":4},{"reg":"812018114014","name":"GOWTHAM M","batch":"2018","avg_gpa":8.58,"all_clear":true,"sem_count":4},{"reg":"812018114022","name":"KARTHIK K","batch":"2018","avg_gpa":8.58,"all_clear":true,"sem_count":4},{"reg":"812018114018","name":"IMRAN N","batch":"2018","avg_gpa":8.54,"all_clear":true,"sem_count":4},{"reg":"812018114036","name":"SENTHILNATHAN R","batch":"2018","avg_gpa":8.52,"all_clear":true,"sem_count":4},{"reg":"812018114038","name":"SHANMUGA PRIYAN T","batch":"2018","avg_gpa":8.47,"all_clear":true,"sem_count":4},{"reg":"812018114004","name":"AJAYKUMAR R","batch":"2018","avg_gpa":8.42,"all_clear":true,"sem_count":4},{"reg":"812018114027","name":"NISHANTH K","batch":"2018","avg_gpa":8.42,"all_clear":true,"sem_count":4},{"reg":"812018114037","name":"SHANKER HARI","batch":"2018","avg_gpa":8.41,"all_clear":true,"sem_count":4},{"reg":"812018114026","name":"NETHAJI","batch":"2018","avg_gpa":8.39,"all_clear":false,"sem_count":4},{"reg":"812018114019","name":"INBARUBAN","batch":"2018","avg_gpa":8.35,"all_clear":false,"sem_count":4},{"reg":"812018114047","name":"VIGNESHWARAN N","batch":"2018","avg_gpa":8.33,"all_clear":true,"sem_count":4},{"reg":"812018114323","name":"SATHEESH KUMAR R","batch":"2018","avg_gpa":8.33,"all_clear":true,"sem_count":4},{"reg":"812018114048","name":"VIKRAM V","batch":"2018","avg_gpa":8.31,"all_clear":true,"sem_count":4},{"reg":"812018114049","name":"YUVARAJ","batch":"2018","avg_gpa":8.31,"all_clear":false,"sem_count":4},{"reg":"812018114325","name":"THAMZSON SAVIER","batch":"2018","avg_gpa":8.27,"all_clear":true,"sem_count":4},{"reg":"812018114030","name":"PRAVEEN G","batch":"2018","avg_gpa":8.17,"all_clear":true,"sem_count":4},{"reg":"812018114319","name":"RUBAN RAJ R","batch":"2018","avg_gpa":8.17,"all_clear":true,"sem_count":4},{"reg":"812018114020","name":"JAHEER HUSSAIN","batch":"2018","avg_gpa":8.14,"all_clear":true,"sem_count":4},{"reg":"812018114035","name":"SAKTHIVEL","batch":"2018","avg_gpa":8.13,"all_clear":true,"sem_count":4},{"reg":"812018114302","name":"ALAN IGNESH J","batch":"2018","avg_gpa":8.07,"all_clear":true,"sem_count":4},{"reg":"812018114034","name":"RISHIKISHORE T","batch":"2018","avg_gpa":8.06,"all_clear":true,"sem_count":4},{"reg":"812018114009","name":"DHANUSH VARDHAN R","batch":"2018","avg_gpa":8.0,"all_clear":true,"sem_count":4},{"reg":"812018114011","name":"DIVAKAR","batch":"2018","avg_gpa":7.99,"all_clear":false,"sem_count":5},{"reg":"812018114024","name":"MOHAMMED MANSOOR","batch":"2018","avg_gpa":7.96,"all_clear":true,"sem_count":5},{"reg":"812018114305","name":"DHILIP P","batch":"2018","avg_gpa":7.95,"all_clear":true,"sem_count":4},{"reg":"812018114312","name":"HARI PRASATH K","batch":"2018","avg_gpa":7.94,"all_clear":true,"sem_count":5},{"reg":"812018114001","name":"AAKASHBABU R","batch":"2018","avg_gpa":7.93,"all_clear":true,"sem_count":5},{"reg":"812018114317","name":"RAJESH R","batch":"2018","avg_gpa":7.92,"all_clear":true,"sem_count":2},{"reg":"812018114701","name":"HARIKARAN","batch":"2018","avg_gpa":7.9,"all_clear":false,"sem_count":4},{"reg":"812018114033","name":"RASU M","batch":"2018","avg_gpa":7.89,"all_clear":true,"sem_count":4},{"reg":"812018114032","name":"PREMKUMAR R","batch":"2018","avg_gpa":7.86,"all_clear":true,"sem_count":4},{"reg":"812018114008","name":"BHARATH R","batch":"2018","avg_gpa":7.82,"all_clear":true,"sem_count":4},{"reg":"812018114023","name":"MANO P","batch":"2018","avg_gpa":7.81,"all_clear":true,"sem_count":4},{"reg":"812018114025","name":"NAVEEN M","batch":"2018","avg_gpa":7.81,"all_clear":true,"sem_count":4},{"reg":"812018114028","name":"NOOR AMEEN","batch":"2018","avg_gpa":7.81,"all_clear":false,"sem_count":4},{"reg":"812018114324","name":"SHANMUGAVEL M","batch":"2018","avg_gpa":7.81,"all_clear":true,"sem_count":4},{"reg":"812018114309","name":"GOPINATH M","batch":"2018","avg_gpa":7.78,"all_clear":true,"sem_count":4},{"reg":"812018114044","name":"VENMUTHU R","batch":"2018","avg_gpa":7.74,"all_clear":true,"sem_count":4},{"reg":"812018114702","name":"SHAKKIEL AHAMED M H","batch":"2018","avg_gpa":7.72,"all_clear":true,"sem_count":4},{"reg":"812018114006","name":"AMARNATH K","batch":"2018","avg_gpa":7.7,"all_clear":true,"sem_count":4},{"reg":"812018114017","name":"HARIHARAN R","batch":"2018","avg_gpa":7.68,"all_clear":true,"sem_count":4},{"reg":"812018114311","name":"GUGANESHWARAN J","batch":"2018","avg_gpa":7.67,"all_clear":false,"sem_count":5},{"reg":"812018114318","name":"RANJITH M","batch":"2018","avg_gpa":7.67,"all_clear":true,"sem_count":4},{"reg":"812018114307","name":"FIDAL CASTRO","batch":"2018","avg_gpa":7.64,"all_clear":true,"sem_count":4},{"reg":"812018114005","name":"AKASH","batch":"2018","avg_gpa":7.62,"all_clear":true,"sem_count":4},{"reg":"812018114029","name":"PRABAHARAN V","batch":"2018","avg_gpa":7.61,"all_clear":true,"sem_count":4},{"reg":"812018114016","name":"GUNAANANTH M","batch":"2018","avg_gpa":7.58,"all_clear":true,"sem_count":4},{"reg":"812018114315","name":"MOHAMEDASHIK J","batch":"2018","avg_gpa":7.58,"all_clear":true,"sem_count":4},{"reg":"812018114301","name":"AHAMED SALMAN M","batch":"2018","avg_gpa":7.42,"all_clear":true,"sem_count":4},{"reg":"812018114042","name":"VENGATESAN V","batch":"2018","avg_gpa":7.41,"all_clear":true,"sem_count":4},{"reg":"812018114021","name":"KANISHKAR L","batch":"2018","avg_gpa":7.33,"all_clear":true,"sem_count":4},{"reg":"812018114045","name":"VIGNESH K","batch":"2018","avg_gpa":7.29,"all_clear":true,"sem_count":5},{"reg":"812018114031","name":"PRAVEEN RAJ","batch":"2018","avg_gpa":7.12,"all_clear":true,"sem_count":4},{"reg":"812018114043","name":"VENGATESH","batch":"2018","avg_gpa":6.97,"all_clear":false,"sem_count":4},{"reg":"812018114320","name":"SAKTHIVEL","batch":"2018","avg_gpa":6.97,"all_clear":false,"sem_count":4},{"reg":"812018114313","name":"HARISURYA","batch":"2018","avg_gpa":6.9,"all_clear":true,"sem_count":4},{"reg":"812018114046","name":"VIGNESH K","batch":"2018","avg_gpa":6.78,"all_clear":false,"sem_count":6},{"reg":"812018114326","name":"VIJAYDURAI","batch":"2018","avg_gpa":5.65,"all_clear":false,"sem_count":5},{"reg":"812019114010","name":"DINESH KUMAR R","batch":"2019","avg_gpa":8.78,"all_clear":true,"sem_count":6},{"reg":"812019114021","name":"MAHESHWARAN M","batch":"2019","avg_gpa":8.78,"all_clear":true,"sem_count":6},{"reg":"812019114013","name":"JAIKILAN J","batch":"2019","avg_gpa":8.77,"all_clear":true,"sem_count":6},{"reg":"812019114034","name":"SALMAN I","batch":"2019","avg_gpa":8.69,"all_clear":true,"sem_count":6},{"reg":"812019114033","name":"SABARISH","batch":"2019","avg_gpa":8.52,"all_clear":true,"sem_count":6},{"reg":"812019114031","name":"RAJESH G","batch":"2019","avg_gpa":8.44,"all_clear":true,"sem_count":6},{"reg":"812019114003","name":"ANDREW BOAZ","batch":"2019","avg_gpa":8.37,"all_clear":false,"sem_count":6},{"reg":"812019114011","name":"HARIKRISHNAN T","batch":"2019","avg_gpa":8.32,"all_clear":false,"sem_count":6},{"reg":"812019114008","name":"DEEPAK V","batch":"2019","avg_gpa":8.3,"all_clear":true,"sem_count":6},{"reg":"812019114028","name":"POOVARASAN N","batch":"2019","avg_gpa":8.3,"all_clear":true,"sem_count":6},{"reg":"812019114030","name":"RAJASEKAR R","batch":"2019","avg_gpa":8.29,"all_clear":false,"sem_count":6},{"reg":"812019114056","name":"VIJAYAKUMAR M","batch":"2019","avg_gpa":8.28,"all_clear":true,"sem_count":6},{"reg":"812019114007","name":"CHITRARASAN","batch":"2019","avg_gpa":8.26,"all_clear":false,"sem_count":6},{"reg":"812019114029","name":"PRAVEEN KUMAR","batch":"2019","avg_gpa":8.23,"all_clear":false,"sem_count":6},{"reg":"812019114049","name":"VARATHAN K","batch":"2019","avg_gpa":8.2,"all_clear":false,"sem_count":6},{"reg":"812019114014","name":"JAYASURYA","batch":"2019","avg_gpa":8.19,"all_clear":false,"sem_count":6},{"reg":"812019114024","name":"MITHUNRAJ R","batch":"2019","avg_gpa":8.16,"all_clear":true,"sem_count":6},{"reg":"812019114005","name":"BALAMURUGAN M","batch":"2019","avg_gpa":8.15,"all_clear":false,"sem_count":6},{"reg":"812019114022","name":"MANOJ KUMAR R","batch":"2019","avg_gpa":8.11,"all_clear":true,"sem_count":5},{"reg":"812019114042","name":"SHANMUGAM R","batch":"2019","avg_gpa":8.11,"all_clear":true,"sem_count":6},{"reg":"812019114035","name":"SALMAN KHAN M","batch":"2019","avg_gpa":8.08,"all_clear":true,"sem_count":6},{"reg":"812019114012","name":"JAHAN","batch":"2019","avg_gpa":8.06,"all_clear":false,"sem_count":6},{"reg":"812019114055","name":"VIGNESH","batch":"2019","avg_gpa":8.02,"all_clear":false,"sem_count":6},{"reg":"812019114047","name":"SRIRAM K","batch":"2019","avg_gpa":8.01,"all_clear":true,"sem_count":6},{"reg":"812019114044","name":"SIVA BALA SUBRAMANIAN","batch":"2019","avg_gpa":7.95,"all_clear":true,"sem_count":6},{"reg":"812019114017","name":"KAVIPRIYA","batch":"2019","avg_gpa":7.92,"all_clear":false,"sem_count":6},{"reg":"812019114050","name":"VASANTHAKUMAR","batch":"2019","avg_gpa":7.81,"all_clear":true,"sem_count":6},{"reg":"812019114043","name":"SHEIK BURHANUDEEN","batch":"2019","avg_gpa":7.79,"all_clear":true,"sem_count":6},{"reg":"812019114052","name":"VENKATESAN V","batch":"2019","avg_gpa":7.78,"all_clear":true,"sem_count":6},{"reg":"812019114045","name":"SIVAKUMAR","batch":"2019","avg_gpa":7.74,"all_clear":false,"sem_count":6},{"reg":"812019114039","name":"SATHISHKUMAR G","batch":"2019","avg_gpa":7.62,"all_clear":true,"sem_count":6},{"reg":"812019114041","name":"SETHUPATHI N","batch":"2019","avg_gpa":7.62,"all_clear":true,"sem_count":6},{"reg":"812019114057","name":"VIJAYARAJ V","batch":"2019","avg_gpa":7.52,"all_clear":true,"sem_count":6},{"reg":"812019114025","name":"MOHAMED SHARUK","batch":"2019","avg_gpa":7.51,"all_clear":false,"sem_count":6},{"reg":"812019114006","name":"BHARATH","batch":"2019","avg_gpa":7.49,"all_clear":true,"sem_count":7},{"reg":"812019114020","name":"MADHANKUMAR K","batch":"2019","avg_gpa":7.49,"all_clear":true,"sem_count":6},{"reg":"812019114053","name":"VENKATESHWARAN K M","batch":"2019","avg_gpa":7.4,"all_clear":true,"sem_count":7},{"reg":"812019114059","name":"VIJAYAVENDHAN","batch":"2019","avg_gpa":7.35,"all_clear":false,"sem_count":6},{"reg":"812019114023","name":"MEGARAJ N","batch":"2019","avg_gpa":7.31,"all_clear":false,"sem_count":6},{"reg":"812019114046","name":"SIVA KUMAR M","batch":"2019","avg_gpa":7.31,"all_clear":false,"sem_count":6},{"reg":"812019114018","name":"KUNAL KUMAR","batch":"2019","avg_gpa":7.28,"all_clear":false,"sem_count":6},{"reg":"812019114040","name":"SAVARI BENADICT J","batch":"2019","avg_gpa":7.26,"all_clear":true,"sem_count":6},{"reg":"812019114038","name":"SARAVANAN P","batch":"2019","avg_gpa":7.2,"all_clear":true,"sem_count":6},{"reg":"812019114002","name":"AKILAN K","batch":"2019","avg_gpa":7.13,"all_clear":true,"sem_count":6},{"reg":"812019114001","name":"AJAY KUMAR P","batch":"2019","avg_gpa":7.0,"all_clear":false,"sem_count":7},{"reg":"812019114004","name":"ARIVAZHAGAN","batch":"2019","avg_gpa":6.88,"all_clear":false,"sem_count":6},{"reg":"812019114032","name":"RAJKIRAN R","batch":"2019","avg_gpa":6.56,"all_clear":false,"sem_count":6},{"reg":"812019114015","name":"JEEVA","batch":"2019","avg_gpa":6.45,"all_clear":false,"sem_count":6},{"reg":"812019114701","name":"SARAN R","batch":"2019","avg_gpa":6.33,"all_clear":true,"sem_count":3},{"reg":"812019114027","name":"NITHISH KUMAR K","batch":"2019","avg_gpa":6.18,"all_clear":false,"sem_count":6},{"reg":"812019114016","name":"KAVINESAN K R","batch":"2019","avg_gpa":6.01,"all_clear":false,"sem_count":6},{"reg":"812020114019","name":"SATHISH KUMAR M","batch":"2020","avg_gpa":8.81,"all_clear":true,"sem_count":8},{"reg":"812020114311","name":"HARIHARA SUDHAN","batch":"2020","avg_gpa":8.8,"all_clear":true,"sem_count":1},{"reg":"812020114002","name":"ARUN","batch":"2020","avg_gpa":7.93,"all_clear":false,"sem_count":8},{"reg":"812020114022","name":"UMARDHEEN","batch":"2020","avg_gpa":7.79,"all_clear":true,"sem_count":8},{"reg":"812020114018","name":"SANJAY","batch":"2020","avg_gpa":7.71,"all_clear":false,"sem_count":8},{"reg":"812020114322","name":"NIRANJAN G","batch":"2020","avg_gpa":7.67,"all_clear":true,"sem_count":1},{"reg":"812020114012","name":"MUTHUKUMAR","batch":"2020","avg_gpa":7.54,"all_clear":false,"sem_count":8},{"reg":"812020114011","name":"MORIES","batch":"2020","avg_gpa":7.47,"all_clear":true,"sem_count":8},{"reg":"812020114010","name":"MOHAMED TAWFEEQ","batch":"2020","avg_gpa":7.37,"all_clear":false,"sem_count":8},{"reg":"812020114309","name":"DINESH","batch":"2020","avg_gpa":7.37,"all_clear":false,"sem_count":6},{"reg":"812020114303","name":"AMEENUDHEEN","batch":"2020","avg_gpa":7.31,"all_clear":true,"sem_count":6},{"reg":"812020114001","name":"AASHIQ SULAIMAN G M","batch":"2020","avg_gpa":7.3,"all_clear":true,"sem_count":8},{"reg":"812020114301","name":"AJAY J","batch":"2020","avg_gpa":7.13,"all_clear":true,"sem_count":6},{"reg":"812020114324","name":"SAKTHISWARAN M","batch":"2020","avg_gpa":7.11,"all_clear":true,"sem_count":6},{"reg":"812020114017","name":"SANJAI","batch":"2020","avg_gpa":7.08,"all_clear":false,"sem_count":8},{"reg":"812020114009","name":"KAVIYARASAN","batch":"2020","avg_gpa":7.02,"all_clear":false,"sem_count":8},{"reg":"812020114312","name":"JAYARAM M","batch":"2020","avg_gpa":6.98,"all_clear":true,"sem_count":6},{"reg":"812020114305","name":"ARUN KUMAR R","batch":"2020","avg_gpa":6.96,"all_clear":true,"sem_count":6},{"reg":"812020114314","name":"KARUNASAGAR V G","batch":"2020","avg_gpa":6.96,"all_clear":true,"sem_count":6},{"reg":"812020114315","name":"KAUSIK V","batch":"2020","avg_gpa":6.92,"all_clear":false,"sem_count":6},{"reg":"812020114023","name":"VASANTH K","batch":"2020","avg_gpa":6.88,"all_clear":false,"sem_count":8},{"reg":"812020114304","name":"ANANTHA RAJ V","batch":"2020","avg_gpa":6.87,"all_clear":true,"sem_count":6},{"reg":"812020114003","name":"BALAJI M","batch":"2020","avg_gpa":6.82,"all_clear":false,"sem_count":4},{"reg":"812020114016","name":"RANJITH M","batch":"2020","avg_gpa":6.76,"all_clear":false,"sem_count":8},{"reg":"812020114325","name":"SANJAIKANTH P","batch":"2020","avg_gpa":6.54,"all_clear":true,"sem_count":6},{"reg":"812020114005","name":"DHEVENDHIRAN G","batch":"2020","avg_gpa":6.48,"all_clear":false,"sem_count":8},{"reg":"812020114329","name":"THIRUMAVALAVAN R","batch":"2020","avg_gpa":6.42,"all_clear":false,"sem_count":6},{"reg":"812020114313","name":"KARTHIKEYAN","batch":"2020","avg_gpa":6.1,"all_clear":false,"sem_count":6},{"reg":"812020114015","name":"RAMKUMAR","batch":"2020","avg_gpa":6.02,"all_clear":false,"sem_count":8},{"reg":"812020114025","name":"VIGNESH","batch":"2020","avg_gpa":5.93,"all_clear":false,"sem_count":8},{"reg":"812020114006","name":"HARISH","batch":"2020","avg_gpa":5.9,"all_clear":false,"sem_count":8},{"reg":"812020114008","name":"KARTHIK K","batch":"2020","avg_gpa":5.87,"all_clear":false,"sem_count":8},{"reg":"812020114013","name":"PON PANDIAN","batch":"2020","avg_gpa":5.83,"all_clear":false,"sem_count":2},{"reg":"812020114004","name":"BHARATHIKUMAR","batch":"2020","avg_gpa":5.57,"all_clear":false,"sem_count":8},{"reg":"812020114327","name":"SIJU MICHAEL J","batch":"2020","avg_gpa":5.57,"all_clear":false,"sem_count":6},{"reg":"812020114319","name":"MOHAMMED ASIF J","batch":"2020","avg_gpa":5.54,"all_clear":false,"sem_count":6},{"reg":"812020114007","name":"JEEVA P","batch":"2020","avg_gpa":5.4,"all_clear":false,"sem_count":5},{"reg":"812020114306","name":"ARUN KUMAR","batch":"2020","avg_gpa":5.36,"all_clear":false,"sem_count":6},{"reg":"812020114024","name":"VELLAICHAMY K","batch":"2020","avg_gpa":5.35,"all_clear":false,"sem_count":6},{"reg":"812020114318","name":"MOHAMED ARIEF","batch":"2020","avg_gpa":5.17,"all_clear":false,"sem_count":6},{"reg":"812020114316","name":"KRISHNAPRASAD G","batch":"2020","avg_gpa":5.13,"all_clear":false,"sem_count":6},{"reg":"812020114323","name":"PUGHAL MANNAN V","batch":"2020","avg_gpa":5.09,"all_clear":false,"sem_count":6},{"reg":"812020114307","name":"BHARATH KUMAR","batch":"2020","avg_gpa":4.97,"all_clear":false,"sem_count":6},{"reg":"812020114701","name":"SAKTHIVEL","batch":"2020","avg_gpa":4.89,"all_clear":false,"sem_count":5},{"reg":"812020114310","name":"GOBI","batch":"2020","avg_gpa":4.84,"all_clear":false,"sem_count":6},{"reg":"812020114308","name":"CHANDRAKUMAR K","batch":"2020","avg_gpa":4.44,"all_clear":false,"sem_count":6},{"reg":"812020114320","name":"NARAYANASAMY P","batch":"2020","avg_gpa":4.39,"all_clear":false,"sem_count":6},{"reg":"812020114302","name":"AKASH R","batch":"2020","avg_gpa":4.33,"all_clear":false,"sem_count":6},{"reg":"812020114020","name":"SENTHIL","batch":"2020","avg_gpa":3.89,"all_clear":false,"sem_count":1},{"reg":"812020114317","name":"MOHAMED ABDULKALAM","batch":"2020","avg_gpa":1.11,"all_clear":false,"sem_count":1},{"reg":"812020114330","name":"VIGNESH VARA MOORTHI","batch":"2020","avg_gpa":1.0,"all_clear":false,"sem_count":1},{"reg":"812021114034","name":"YOGESHWARAN G","batch":"2021","avg_gpa":8.91,"all_clear":false,"sem_count":6},{"reg":"812021114004","name":"AMEEN THAKIR G M","batch":"2021","avg_gpa":8.81,"all_clear":true,"sem_count":6},{"reg":"812021114032","name":"TAMILMANI T","batch":"2021","avg_gpa":8.81,"all_clear":true,"sem_count":6},{"reg":"812021114013","name":"KARTHICK M","batch":"2021","avg_gpa":8.78,"all_clear":true,"sem_count":6},{"reg":"812021114003","name":"ALLTRIN BRUNO","batch":"2021","avg_gpa":8.75,"all_clear":true,"sem_count":6},{"reg":"812021114301","name":"BRIJITH MATHEW","batch":"2021","avg_gpa":8.58,"all_clear":true,"sem_count":6},{"reg":"812021114022","name":"PRAGADEESH P","batch":"2021","avg_gpa":8.54,"all_clear":true,"sem_count":6},{"reg":"812021114305","name":"NITHISH KUMAR R","batch":"2021","avg_gpa":8.5,"all_clear":true,"sem_count":6},{"reg":"812021114010","name":"DHINESHKUMAR","batch":"2021","avg_gpa":8.31,"all_clear":true,"sem_count":6},{"reg":"812021114031","name":"SURESHKUMAR K","batch":"2021","avg_gpa":8.17,"all_clear":true,"sem_count":7},{"reg":"812021114025","name":"SAKTHIVEL","batch":"2021","avg_gpa":8.17,"all_clear":true,"sem_count":6},{"reg":"812021114015","name":"KHADAR BASHA N","batch":"2021","avg_gpa":8.13,"all_clear":true,"sem_count":7},{"reg":"812021114006","name":"BALAMURUGAN N","batch":"2021","avg_gpa":8.12,"all_clear":true,"sem_count":8},{"reg":"812021114310","name":"VIGNESH V","batch":"2021","avg_gpa":8.07,"all_clear":false,"sem_count":6},{"reg":"812021114307","name":"RAJESH R","batch":"2021","avg_gpa":8.05,"all_clear":true,"sem_count":6},{"reg":"812021114030","name":"SRIRAM","batch":"2021","avg_gpa":7.96,"all_clear":true,"sem_count":7},{"reg":"812021114007","name":"CHINNAIAH P","batch":"2021","avg_gpa":7.73,"all_clear":true,"sem_count":7},{"reg":"812021114008","name":"DHANRAJ","batch":"2021","avg_gpa":7.56,"all_clear":false,"sem_count":7},{"reg":"812021114027","name":"SANJAY R","batch":"2021","avg_gpa":7.51,"all_clear":true,"sem_count":7},{"reg":"812021114029","name":"SARATHI","batch":"2021","avg_gpa":7.47,"all_clear":false,"sem_count":7},{"reg":"812021114033","name":"VIGNESH R","batch":"2021","avg_gpa":7.43,"all_clear":true,"sem_count":7},{"reg":"812021114304","name":"MANIKANDAN","batch":"2021","avg_gpa":7.35,"all_clear":false,"sem_count":6},{"reg":"812021114311","name":"VIJAY R","batch":"2021","avg_gpa":7.26,"all_clear":false,"sem_count":6},{"reg":"812021114308","name":"SABEER MOHAMED","batch":"2021","avg_gpa":7.18,"all_clear":false,"sem_count":6},{"reg":"812021114302","name":"DANIAL P","batch":"2021","avg_gpa":7.1,"all_clear":false,"sem_count":6},{"reg":"812021114303","name":"GOKULNATH","batch":"2021","avg_gpa":7.0,"all_clear":false,"sem_count":6},{"reg":"812021114023","name":"PRITHIVIRAJ","batch":"2021","avg_gpa":6.8,"all_clear":true,"sem_count":7},{"reg":"812021114017","name":"MOHAMED KURESH","batch":"2021","avg_gpa":6.71,"all_clear":false,"sem_count":8},{"reg":"812021114026","name":"SAMPATH KUMAR","batch":"2021","avg_gpa":6.63,"all_clear":false,"sem_count":8},{"reg":"812021114001","name":"AAKASH R","batch":"2021","avg_gpa":6.58,"all_clear":false,"sem_count":8},{"reg":"812021114024","name":"RISHIKESH P","batch":"2021","avg_gpa":6.22,"all_clear":false,"sem_count":8},{"reg":"812021114018","name":"MOHAMMED AASATH","batch":"2021","avg_gpa":6.0,"all_clear":false,"sem_count":8},{"reg":"812021114021","name":"NAVEEN","batch":"2021","avg_gpa":5.84,"all_clear":false,"sem_count":8},{"reg":"812021114019","name":"MURASOLIMARAN R","batch":"2021","avg_gpa":5.28,"all_clear":false,"sem_count":6},{"reg":"812021114016","name":"MANIVASAGAM G","batch":"2021","avg_gpa":5.04,"all_clear":false,"sem_count":6},{"reg":"812021114012","name":"JEGAN","batch":"2021","avg_gpa":4.54,"all_clear":false,"sem_count":8},{"reg":"812021114002","name":"AJAY","batch":"2021","avg_gpa":3.51,"all_clear":false,"sem_count":8},{"reg":"812021114306","name":"NITHISHKUMAR","batch":"2021","avg_gpa":1.5,"all_clear":false,"sem_count":1},{"reg":"812021114309","name":"SHIBI M","batch":"2021","avg_gpa":0.78,"all_clear":false,"sem_count":1},{"reg":"812022114027","name":"PARAMASIVAM M","batch":"2022","avg_gpa":8.81,"all_clear":true,"sem_count":6},{"reg":"812022114018","name":"MANOJ G","batch":"2022","avg_gpa":8.74,"all_clear":true,"sem_count":6},{"reg":"812022114024","name":"NANTHAGOPAL","batch":"2022","avg_gpa":8.46,"all_clear":false,"sem_count":6},{"reg":"812022114005","name":"ARPUTHA GANESH","batch":"2022","avg_gpa":8.25,"all_clear":true,"sem_count":6},{"reg":"812022114008","name":"BHARATHIRAJA","batch":"2022","avg_gpa":8.06,"all_clear":true,"sem_count":6},{"reg":"812022114016","name":"MANIBALAN R","batch":"2022","avg_gpa":7.97,"all_clear":true,"sem_count":7},{"reg":"812022114306","name":"MOHAMED DHARVESH","batch":"2022","avg_gpa":7.8,"all_clear":false,"sem_count":5},{"reg":"812022114021","name":"MOHAMMED AFSAR M","batch":"2022","avg_gpa":7.78,"all_clear":true,"sem_count":7},{"reg":"812022114305","name":"MADHAVAN M","batch":"2022","avg_gpa":7.78,"all_clear":false,"sem_count":5},{"reg":"812022114010","name":"DEEPIKA P","batch":"2022","avg_gpa":7.46,"all_clear":true,"sem_count":7},{"reg":"812022114301","name":"BHARATH R","batch":"2022","avg_gpa":7.36,"all_clear":false,"sem_count":5},{"reg":"812022114304","name":"HARIPRABU","batch":"2022","avg_gpa":7.3,"all_clear":false,"sem_count":5},{"reg":"812022114303","name":"GOPINATH G","batch":"2022","avg_gpa":7.27,"all_clear":false,"sem_count":5},{"reg":"812022114015","name":"KAVIYARASAN","batch":"2022","avg_gpa":7.09,"all_clear":false,"sem_count":7},{"reg":"812022114029","name":"RAGUL R","batch":"2022","avg_gpa":7.02,"all_clear":false,"sem_count":7},{"reg":"812022114001","name":"ABINAYA R","batch":"2022","avg_gpa":6.6,"all_clear":false,"sem_count":6},{"reg":"812022114026","name":"NIRMALA K","batch":"2022","avg_gpa":6.41,"all_clear":false,"sem_count":6},{"reg":"812022114036","name":"YAHIYA","batch":"2022","avg_gpa":6.39,"all_clear":false,"sem_count":6},{"reg":"812022114002","name":"ABISHEK","batch":"2022","avg_gpa":6.37,"all_clear":true,"sem_count":7},{"reg":"812022114033","name":"SANJAY PRATHAP G","batch":"2022","avg_gpa":5.85,"all_clear":false,"sem_count":7},{"reg":"812022114302","name":"DHANUSH R","batch":"2022","avg_gpa":5.71,"all_clear":false,"sem_count":5},{"reg":"812022114013","name":"JEEVANRAJ M","batch":"2022","avg_gpa":5.4,"all_clear":false,"sem_count":7},{"reg":"812022114003","name":"AJEESH K","batch":"2022","avg_gpa":4.91,"all_clear":false,"sem_count":7},{"reg":"812022114035","name":"VENGADABALAJI K","batch":"2022","avg_gpa":4.8,"all_clear":false,"sem_count":7},{"reg":"812022114011","name":"HARIPRASATH R","batch":"2022","avg_gpa":4.57,"all_clear":false,"sem_count":6},{"reg":"812022114034","name":"STANLY XAVIER","batch":"2022","avg_gpa":4.47,"all_clear":false,"sem_count":7},{"reg":"812022114031","name":"SABINASH","batch":"2022","avg_gpa":4.19,"all_clear":false,"sem_count":7},{"reg":"812022114307","name":"SAKTHISVARAN","batch":"2022","avg_gpa":4.1,"all_clear":false,"sem_count":1},{"reg":"812022114017","name":"MANMATHA VALAVAN","batch":"2022","avg_gpa":4.06,"all_clear":false,"sem_count":7},{"reg":"812022114014","name":"JEGADEESH M","batch":"2022","avg_gpa":3.98,"all_clear":false,"sem_count":6},{"reg":"812022114023","name":"NAGARETHINAM V","batch":"2022","avg_gpa":3.98,"all_clear":false,"sem_count":7},{"reg":"812022114020","name":"MASI PERIYANNA SAMY T","batch":"2022","avg_gpa":3.93,"all_clear":false,"sem_count":6},{"reg":"812022114019","name":"MANOJ","batch":"2022","avg_gpa":3.91,"all_clear":false,"sem_count":7},{"reg":"812022114025","name":"NIDHIN NANMOZHIAN M","batch":"2022","avg_gpa":3.5,"all_clear":false,"sem_count":6},{"reg":"812022114007","name":"BARATH P","batch":"2022","avg_gpa":3.36,"all_clear":false,"sem_count":5},{"reg":"812022114012","name":"INBATHAMIZHAN","batch":"2022","avg_gpa":3.3,"all_clear":false,"sem_count":7},{"reg":"812022114032","name":"SANJAY M","batch":"2022","avg_gpa":3.24,"all_clear":false,"sem_count":6},{"reg":"812022114004","name":"AKASH","batch":"2022","avg_gpa":3.2,"all_clear":false,"sem_count":7},{"reg":"812022114030","name":"RAGUPATHI R","batch":"2022","avg_gpa":3.17,"all_clear":false,"sem_count":7},{"reg":"812023114033","name":"VISHWANATHAN K","batch":"2023","avg_gpa":8.72,"all_clear":true,"sem_count":5},{"reg":"812023114303","name":"HARISH KUMAR M","batch":"2023","avg_gpa":8.61,"all_clear":true,"sem_count":3},{"reg":"812023114032","name":"VINOTH K","batch":"2023","avg_gpa":8.3,"all_clear":false,"sem_count":5},{"reg":"812023114019","name":"RAMARAJ K","batch":"2023","avg_gpa":7.69,"all_clear":false,"sem_count":5},{"reg":"812023114022","name":"SELVAM K","batch":"2023","avg_gpa":7.69,"all_clear":false,"sem_count":5},{"reg":"812023114302","name":"GARWIN RONALD","batch":"2023","avg_gpa":7.53,"all_clear":false,"sem_count":3},{"reg":"812023114024","name":"SIVA","batch":"2023","avg_gpa":7.51,"all_clear":false,"sem_count":5},{"reg":"812023114030","name":"VIJAY SARATHI","batch":"2023","avg_gpa":7.46,"all_clear":false,"sem_count":5},{"reg":"812023114023","name":"SELVAZHAGAN","batch":"2023","avg_gpa":7.44,"all_clear":false,"sem_count":5},{"reg":"812023114028","name":"VIJAY M","batch":"2023","avg_gpa":7.38,"all_clear":true,"sem_count":5},{"reg":"812023114007","name":"HARI V","batch":"2023","avg_gpa":7.25,"all_clear":false,"sem_count":5},{"reg":"812023114011","name":"LOGESH T","batch":"2023","avg_gpa":7.22,"all_clear":false,"sem_count":5},{"reg":"812023114306","name":"PRADEESH P","batch":"2023","avg_gpa":6.56,"all_clear":false,"sem_count":3},{"reg":"812023114018","name":"PRIYADHARSHINI R","batch":"2023","avg_gpa":6.29,"all_clear":false,"sem_count":5},{"reg":"812023114305","name":"NIRMALRAJ N","batch":"2023","avg_gpa":6.26,"all_clear":false,"sem_count":3},{"reg":"812023114301","name":"DEEPAK P","batch":"2023","avg_gpa":6.22,"all_clear":false,"sem_count":3},{"reg":"812023114005","name":"DHARSHINI","batch":"2023","avg_gpa":6.2,"all_clear":false,"sem_count":5},{"reg":"812023114025","name":"SRIDHAR T","batch":"2023","avg_gpa":6.2,"all_clear":false,"sem_count":5},{"reg":"812023114026","name":"SRI SIVASAKTHI","batch":"2023","avg_gpa":6.1,"all_clear":false,"sem_count":2},{"reg":"812023114308","name":"VISHAL K","batch":"2023","avg_gpa":6.07,"all_clear":false,"sem_count":3},{"reg":"812023114020","name":"RAVIVARMAN","batch":"2023","avg_gpa":5.89,"all_clear":false,"sem_count":5},{"reg":"812023114013","name":"MOHAMED JASEEM M","batch":"2023","avg_gpa":5.47,"all_clear":false,"sem_count":5},{"reg":"812023114029","name":"VIJAYAKUMAR G","batch":"2023","avg_gpa":5.26,"all_clear":false,"sem_count":5},{"reg":"812023114307","name":"RIYASKHAN","batch":"2023","avg_gpa":5.23,"all_clear":false,"sem_count":3},{"reg":"812023114002","name":"ANBARASAN V","batch":"2023","avg_gpa":5.11,"all_clear":false,"sem_count":5},{"reg":"812023114010","name":"KEERTHIVASAN","batch":"2023","avg_gpa":5.0,"all_clear":false,"sem_count":5},{"reg":"812023114031","name":"VINITH","batch":"2023","avg_gpa":4.85,"all_clear":false,"sem_count":2},{"reg":"812023114017","name":"PRAKASH P","batch":"2023","avg_gpa":4.55,"all_clear":false,"sem_count":5},{"reg":"812023114014","name":"NARESH","batch":"2023","avg_gpa":4.47,"all_clear":false,"sem_count":5},{"reg":"812023114021","name":"SARAN","batch":"2023","avg_gpa":4.3,"all_clear":false,"sem_count":5},{"reg":"812023114016","name":"NOOR MOHAMED M","batch":"2023","avg_gpa":4.25,"all_clear":false,"sem_count":5},{"reg":"812023114304","name":"LAKSHMI KANTHAN M","batch":"2023","avg_gpa":4.15,"all_clear":false,"sem_count":3},{"reg":"812023114008","name":"HARIKRISHNAN","batch":"2023","avg_gpa":3.8,"all_clear":false,"sem_count":5},{"reg":"812023114009","name":"IYYAPPAN","batch":"2023","avg_gpa":3.8,"all_clear":false,"sem_count":5},{"reg":"812023114015","name":"NITHISHKUMAR M","batch":"2023","avg_gpa":3.75,"all_clear":false,"sem_count":4},{"reg":"812023114001","name":"AKASH J","batch":"2023","avg_gpa":3.64,"all_clear":false,"sem_count":5},{"reg":"812023114006","name":"DHILIP RANJAN","batch":"2023","avg_gpa":3.25,"all_clear":false,"sem_count":2},{"reg":"812023114003","name":"ARIKRISHNAN","batch":"2023","avg_gpa":2.85,"all_clear":false,"sem_count":3},{"reg":"812023114027","name":"TAMILSELVAN G","batch":"2023","avg_gpa":2.85,"all_clear":false,"sem_count":5},{"reg":"812023114004","name":"CHINNAMUTHU M","batch":"2023","avg_gpa":1.95,"all_clear":false,"sem_count":2},{"reg":"812023114012","name":"MANIKANDAN","batch":"2023","avg_gpa":1.5,"all_clear":false,"sem_count":2},{"reg":"812024114014","name":"SABARIGIRI","batch":"2024","avg_gpa":8.58,"all_clear":false,"sem_count":2},{"reg":"812024114007","name":"GOKUL N","batch":"2024","avg_gpa":7.85,"all_clear":false,"sem_count":2},{"reg":"812024114016","name":"SAKTHIVEL P","batch":"2024","avg_gpa":7.84,"all_clear":true,"sem_count":3},{"reg":"812024114006","name":"DINESH","batch":"2024","avg_gpa":7.72,"all_clear":false,"sem_count":2},{"reg":"812024114022","name":"THULASIRAM R","batch":"2024","avg_gpa":7.7,"all_clear":false,"sem_count":2},{"reg":"812024114019","name":"SIVABALAN R","batch":"2024","avg_gpa":7.5,"all_clear":false,"sem_count":3},{"reg":"812024114013","name":"RICHARD M","batch":"2024","avg_gpa":7.4,"all_clear":false,"sem_count":2},{"reg":"812024114015","name":"SAKTHINATHAN K","batch":"2024","avg_gpa":7.38,"all_clear":false,"sem_count":3},{"reg":"812024114012","name":"MANOJ R","batch":"2024","avg_gpa":7.25,"all_clear":false,"sem_count":2},{"reg":"812024114001","name":"ADHESH","batch":"2024","avg_gpa":7.16,"all_clear":false,"sem_count":3},{"reg":"812024114305","name":"ROBINSON","batch":"2024","avg_gpa":6.73,"all_clear":false,"sem_count":1},{"reg":"812024114003","name":"BALASUBRAMANIAN M","batch":"2024","avg_gpa":6.5,"all_clear":false,"sem_count":3},{"reg":"812024114008","name":"HARIPRASATH","batch":"2024","avg_gpa":6.0,"all_clear":false,"sem_count":3},{"reg":"812024114002","name":"AREES M","batch":"2024","avg_gpa":5.97,"all_clear":false,"sem_count":2},{"reg":"812024114020","name":"SUBIKARAN K","batch":"2024","avg_gpa":5.74,"all_clear":false,"sem_count":3},{"reg":"812024114304","name":"MANI","batch":"2024","avg_gpa":5.45,"all_clear":false,"sem_count":1},{"reg":"812024114301","name":"GURUPRASATH P","batch":"2024","avg_gpa":4.9,"all_clear":false,"sem_count":1},{"reg":"812024114302","name":"JAWAHAR J","batch":"2024","avg_gpa":4.8,"all_clear":false,"sem_count":1},{"reg":"812024114004","name":"DEVASESULAN R","batch":"2024","avg_gpa":4.64,"all_clear":false,"sem_count":2},{"reg":"812024114024","name":"VETRIVEL","batch":"2024","avg_gpa":4.4,"all_clear":false,"sem_count":2},{"reg":"812024114010","name":"LOGESHWARAN","batch":"2024","avg_gpa":3.96,"all_clear":false,"sem_count":3},{"reg":"812024114018","name":"SARAVANAKUMAR","batch":"2024","avg_gpa":2.47,"all_clear":false,"sem_count":3},{"reg":"812025114005","name":"DHARANI","batch":"2025","avg_gpa":7.75,"all_clear":false,"sem_count":1},{"reg":"812025114002","name":"ALAGU PRIYA","batch":"2025","avg_gpa":7.17,"all_clear":false,"sem_count":1},{"reg":"812025114009","name":"JEEVANATHAN","batch":"2025","avg_gpa":6.33,"all_clear":false,"sem_count":1},{"reg":"812025114015","name":"NISHAN","batch":"2025","avg_gpa":6.0,"all_clear":false,"sem_count":1},{"reg":"812025114003","name":"ATHISH R","batch":"2025","avg_gpa":5.18,"all_clear":false,"sem_count":1},{"reg":"812025114019","name":"SARAN K","batch":"2025","avg_gpa":4.91,"all_clear":false,"sem_count":1},{"reg":"812025114020","name":"SIVAGURU P","batch":"2025","avg_gpa":4.64,"all_clear":false,"sem_count":1},{"reg":"812025114010","name":"KABILAN","batch":"2025","avg_gpa":3.75,"all_clear":false,"sem_count":1},{"reg":"812025114004","name":"BHARATHIDHASAN R","batch":"2025","avg_gpa":3.55,"all_clear":false,"sem_count":1},{"reg":"812025114008","name":"JANARTHAN","batch":"2025","avg_gpa":3.5,"all_clear":false,"sem_count":1},{"reg":"812025114007","name":"HENISH K","batch":"2025","avg_gpa":3.45,"all_clear":false,"sem_count":1},{"reg":"812025114022","name":"SUPASH","batch":"2025","avg_gpa":3.33,"all_clear":false,"sem_count":1},{"reg":"812025114021","name":"SRITHARAN","batch":"2025","avg_gpa":3.25,"all_clear":false,"sem_count":1},{"reg":"812025114016","name":"PAVITHRAN P","batch":"2025","avg_gpa":3.09,"all_clear":false,"sem_count":1},{"reg":"812025114024","name":"UMA SHANKAR T R","batch":"2025","avg_gpa":3.09,"all_clear":false,"sem_count":1},{"reg":"812025114006","name":"GILBERT","batch":"2025","avg_gpa":3.0,"all_clear":false,"sem_count":1},{"reg":"812025114026","name":"VETRIVEL P","batch":"2025","avg_gpa":2.64,"all_clear":false,"sem_count":1},{"reg":"812025114012","name":"LOGESHWARAN H","batch":"2025","avg_gpa":2.45,"all_clear":false,"sem_count":1},{"reg":"812025114023","name":"THARUN T","batch":"2025","avg_gpa":2.36,"all_clear":false,"sem_count":1},{"reg":"812025114025","name":"VASIGARAN G","batch":"2025","avg_gpa":2.36,"all_clear":false,"sem_count":1},{"reg":"812025114017","name":"PRABHAKARAN I","batch":"2025","avg_gpa":2.27,"all_clear":false,"sem_count":1},{"reg":"812025114001","name":"ABINESH R","batch":"2025","avg_gpa":1.91,"all_clear":false,"sem_count":1},{"reg":"812025114013","name":"MANOJKUMAR N","batch":"2025","avg_gpa":1.91,"all_clear":false,"sem_count":1},{"reg":"812025114014","name":"MOHAMED KALIL RAHMAN","batch":"2025","avg_gpa":1.91,"all_clear":false,"sem_count":1},{"reg":"812025114011","name":"KISHOR KUMAR N","batch":"2025","avg_gpa":1.82,"all_clear":false,"sem_count":1},{"reg":"812025114018","name":"PRAVEEN K","batch":"2025","avg_gpa":1.82,"all_clear":false,"sem_count":1}],"sem_stats":{"2020":{"2":{"total":22,"passed":17,"pass_pct":77.3,"avg_gpa":8.34},"1":{"total":24,"passed":17,"pass_pct":70.8,"avg_gpa":6.88},"4":{"total":45,"passed":17,"pass_pct":37.8,"avg_gpa":5.49},"3":{"total":48,"passed":38,"pass_pct":79.2,"avg_gpa":8.22},"5":{"total":45,"passed":16,"pass_pct":35.6,"avg_gpa":5.61},"6":{"total":43,"passed":18,"pass_pct":41.9,"avg_gpa":5.64},"7":{"total":42,"passed":16,"pass_pct":38.1,"avg_gpa":6.41},"8":{"total":42,"passed":21,"pass_pct":50.0,"avg_gpa":5.5}},"2017":{"3":{"total":11,"passed":9,"pass_pct":81.8,"avg_gpa":7.64},"5":{"total":14,"passed":11,"pass_pct":78.6,"avg_gpa":7.04},"7":{"total":108,"passed":84,"pass_pct":77.8,"avg_gpa":8.28},"8":{"total":106,"passed":84,"pass_pct":79.2,"avg_gpa":7.94},"1":{"total":9,"passed":8,"pass_pct":88.9,"avg_gpa":6.85},"4":{"total":25,"passed":22,"pass_pct":88.0,"avg_gpa":7.72},"2":{"total":5,"passed":4,"pass_pct":80.0,"avg_gpa":7.21}},"2018":{"3":{"total":6,"passed":6,"pass_pct":100.0,"avg_gpa":7.83},"5":{"total":65,"passed":56,"pass_pct":86.2,"avg_gpa":7.72},"6":{"total":65,"passed":54,"pass_pct":83.1,"avg_gpa":8.29},"2":{"total":3,"passed":2,"pass_pct":66.7,"avg_gpa":8.33},"7":{"total":65,"passed":54,"pass_pct":83.1,"avg_gpa":8.58},"8":{"total":65,"passed":52,"pass_pct":80.0,"avg_gpa":7.14},"1":{"total":1,"passed":1,"pass_pct":100.0,"avg_gpa":6.0}},"2019":{"3":{"total":51,"passed":40,"pass_pct":78.4,"avg_gpa":8.71},"4":{"total":50,"passed":40,"pass_pct":80.0,"avg_gpa":8.39},"5":{"total":50,"passed":40,"pass_pct":80.0,"avg_gpa":8.6},"6":{"total":51,"passed":34,"pass_pct":66.7,"avg_gpa":6.63},"1":{"total":3,"passed":3,"pass_pct":100.0,"avg_gpa":7.33},"7":{"total":51,"passed":29,"pass_pct":56.9,"avg_gpa":6.83},"8":{"total":51,"passed":37,"pass_pct":72.5,"avg_gpa":7.45}},"2016":{"1":{"total":3,"passed":2,"pass_pct":66.7,"avg_gpa":6.5},"5":{"total":7,"passed":5,"pass_pct":71.4,"avg_gpa":6.8},"6":{"total":13,"passed":8,"pass_pct":61.5,"avg_gpa":6.17},"2":{"total":3,"passed":3,"pass_pct":100.0,"avg_gpa":6.53},"3":{"total":8,"passed":7,"pass_pct":87.5,"avg_gpa":6.49},"4":{"total":8,"passed":5,"pass_pct":62.5,"avg_gpa":6.32},"7":{"total":7,"passed":4,"pass_pct":57.1,"avg_gpa":6.5},"8":{"total":3,"passed":2,"pass_pct":66.7,"avg_gpa":6.06}},"2015":{"4":{"total":9,"passed":3,"pass_pct":33.3,"avg_gpa":6.62},"5":{"total":9,"passed":5,"pass_pct":55.6,"avg_gpa":6.65},"7":{"total":9,"passed":4,"pass_pct":44.4,"avg_gpa":5.78},"8":{"total":8,"passed":4,"pass_pct":50.0,"avg_gpa":6.57},"1":{"total":5,"passed":2,"pass_pct":40.0,"avg_gpa":6.83},"2":{"total":7,"passed":3,"pass_pct":42.9,"avg_gpa":6.02},"3":{"total":8,"passed":5,"pass_pct":62.5,"avg_gpa":6.59},"6":{"total":11,"passed":6,"pass_pct":54.5,"avg_gpa":6.4}},"2021":{"4":{"total":37,"passed":21,"pass_pct":56.8,"avg_gpa":6.11},"1":{"total":14,"passed":5,"pass_pct":35.7,"avg_gpa":4.81},"2":{"total":17,"passed":8,"pass_pct":47.1,"avg_gpa":5.77},"3":{"total":39,"passed":23,"pass_pct":59.0,"avg_gpa":6.65},"5":{"total":37,"passed":26,"pass_pct":70.3,"avg_gpa":7.4},"6":{"total":37,"passed":24,"pass_pct":64.9,"avg_gpa":7.73},"8":{"total":37,"passed":30,"pass_pct":81.1,"avg_gpa":9.27},"7":{"total":37,"passed":27,"pass_pct":73.0,"avg_gpa":7.44}},"2022":{"1":{"total":27,"passed":7,"pass_pct":25.9,"avg_gpa":4.03},"2":{"total":32,"passed":12,"pass_pct":37.5,"avg_gpa":5.81},"3":{"total":39,"passed":13,"pass_pct":33.3,"avg_gpa":5.24},"4":{"total":38,"passed":14,"pass_pct":36.8,"avg_gpa":5.23},"5":{"total":38,"passed":17,"pass_pct":44.7,"avg_gpa":6.28},"6":{"total":38,"passed":18,"pass_pct":47.4,"avg_gpa":7.17},"7":{"total":37,"passed":15,"pass_pct":40.5,"avg_gpa":5.89}},"2023":{"1":{"total":33,"passed":12,"pass_pct":36.4,"avg_gpa":5.26},"2":{"total":33,"passed":15,"pass_pct":45.5,"avg_gpa":5.55},"3":{"total":36,"passed":10,"pass_pct":27.8,"avg_gpa":5.4},"4":{"total":35,"passed":8,"pass_pct":22.9,"avg_gpa":5.48},"5":{"total":35,"passed":7,"pass_pct":20.0,"avg_gpa":6.91}},"2024":{"1":{"total":13,"passed":4,"pass_pct":30.8,"avg_gpa":4.86},"2":{"total":19,"passed":10,"pass_pct":52.6,"avg_gpa":6.94},"3":{"total":21,"passed":1,"pass_pct":4.8,"avg_gpa":6.43}},"2025":{"1":{"total":26,"passed":0,"pass_pct":0.0,"avg_gpa":3.59}}}};
+const STUDENTS = RAW.students;
+const SEM_STATS = RAW.sem_stats;
+const BATCHES = [...new Set(STUDENTS.map(s => s.batch))].sort();
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function barColor(p) { return p >= 75 ? '#2d6a4f' : p >= 50 ? '#d97706' : '#c0392b'; }
+function gpaColor(g) { return g >= 9 ? '#2d6a4f' : g >= 7.5 ? '#1e3a5f' : g >= 6 ? '#d97706' : '#c0392b'; }
+function pillClass(p) { return p >= 75 ? 'pill-green' : p >= 50 ? 'pill-amber' : 'pill-red'; }
+function passLabel(p) { return p >= 75 ? 'High pass' : p >= 50 ? 'Moderate' : 'Low pass'; }
+function batchStudents(b) { return STUDENTS.filter(s => b ? s.batch === b : true); }
+function batchStats(b) {
+  const st = batchStudents(b);
+  const total = st.length;
+  const ac = st.filter(s => s.all_clear).length;
+  const gpas = st.filter(s => s.avg_gpa > 0).map(s => s.avg_gpa);
+  const avgGpa = gpas.length ? +(gpas.reduce((a, x) => a + x, 0) / gpas.length).toFixed(2) : 0;
+  const semRows = SEM_STATS[b] || {};
+  let totalApp = 0, totalPass = 0;
+  Object.values(semRows).forEach(r => { totalApp += r.total; totalPass += r.passed; });
+  const passRate = totalApp ? +(totalPass / totalApp * 100).toFixed(1) : 0;
+  return { total, ac, avgGpa, totalApp, totalPass, passRate };
+}
+
+// ── TAB SWITCHER ──────────────────────────────────────────────────────────────
+function showTab(btn, t) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  btn.classList.add('active');
+  if (t === 'batches') renderBatchCards();
+  if (t === 'toppers') renderToppers();
+}
+
+// ── POPULATE SELECTS ──────────────────────────────────────────────────────────
+function populateSelects() {
+  ['ov-batch-sel','st-batch','top-batch','rpt-batch'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    BATCHES.forEach(b => {
+      const o = document.createElement('option');
+      o.value = b; o.textContent = 'Batch ' + b;
+      el.appendChild(o);
+    });
+  });
+  document.getElementById('ov-batch-sel').value = '2019';
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const total = STUDENTS.length;
+  const ac = STUDENTS.filter(s => s.all_clear).length;
+  const gpas = STUDENTS.filter(s => s.avg_gpa > 0).map(s => s.avg_gpa);
+  const avgGpa = gpas.length ? (gpas.reduce((a, x) => a + x, 0) / gpas.length).toFixed(2) : 0;
+  let totalApp = 0, totalPass = 0;
+  Object.values(SEM_STATS).forEach(ss => Object.values(ss).forEach(r => { totalApp += r.total; totalPass += r.passed; }));
+  const gpa75 = STUDENTS.filter(s => s.avg_gpa >= 7.5).length;
+  const ovr = (totalPass / totalApp * 100).toFixed(1);
+
+  document.getElementById('ov-stats').innerHTML =
+    '<div class="stat-card"><div class="stat-label">Total students</div><div class="stat-val">' + total + '</div><div class="stat-sub">Across ' + BATCHES.length + ' batches</div></div>' +
+    '<div class="stat-card"><div class="stat-label">All-clear (no arrears)</div><div class="stat-val">' + ac + '</div><div class="stat-sub">' + (ac/total*100).toFixed(1) + '% of students</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Overall pass rate</div><div class="stat-val">' + ovr + '%</div><div class="stat-sub">' + totalPass + ' of ' + totalApp + ' exams</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Avg GPA (all)</div><div class="stat-val">' + avgGpa + '</div><div class="stat-sub">10-point scale</div></div>' +
+    '<div class="stat-card"><div class="stat-label">GPA &ge; 7.5</div><div class="stat-val">' + gpa75 + '</div><div class="stat-sub">' + (gpa75/total*100).toFixed(1) + '% high performers</div></div>';
+
+  renderBatchPassChart();
+  renderStudentCountChart();
+  renderSemChart();
+}
+
+let cBP = null, cSC = null, cSem = null;
+function renderBatchPassChart() {
+  const labels = BATCHES;
+  const data = BATCHES.map(b => batchStats(b).passRate);
+  const colors = data.map(d => barColor(d));
+  if (cBP) cBP.destroy();
+  cBP = new Chart(document.getElementById('chart-batch-pass'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Pass %', data, backgroundColor: colors, borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
+      },
+      scales: {
+        y: { min: 0, max: 115, ticks: { callback: v => v <= 100 ? v + '%' : '', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { ticks: { font: { size: 11 } } }
+      },
+      animation: { onComplete: function() {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.font = 'bold 10px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        this.data.datasets.forEach((ds, di) => {
+          this.getDatasetMeta(di).data.forEach((bar, i) => {
+            const val = ds.data[i];
+            ctx.fillStyle = barColor(val);
+            ctx.fillText(val + '%', bar.x, bar.y - 4);
+          });
+        });
+        ctx.restore();
+      }}
+    }
+  });
+}
+function renderStudentCountChart() {
+  const labels = BATCHES;
+  const data = BATCHES.map(b => batchStudents(b).length);
+  const maxVal = Math.max(...data);
+  if (cSC) cSC.destroy();
+  cSC = new Chart(document.getElementById('chart-students'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Students', data, backgroundColor: '#1e3a5f', borderRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 11 } } },
+        y: { max: Math.ceil(maxVal * 1.18), ticks: { font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      },
+      animation: { onComplete: function() {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.font = 'bold 10px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = '#1e3a5f';
+        this.data.datasets.forEach((ds, di) => {
+          this.getDatasetMeta(di).data.forEach((bar, i) => {
+            ctx.fillText(ds.data[i], bar.x, bar.y - 4);
+          });
+        });
+        ctx.restore();
+      }}
+    }
+  });
+}
+function renderSemChart() {
+  const batch = document.getElementById('ov-batch-sel').value || BATCHES[0];
+  const ss = SEM_STATS[batch] || {};
+  const sems = Object.keys(ss).sort((a, b) => +a - +b);
+  const passData = sems.map(s => ss[s].pass_pct);
+  const gpaData = sems.map(s => ss[s].avg_gpa);
+  if (cSem) cSem.destroy();
+  cSem = new Chart(document.getElementById('chart-sem'), {
+    type: 'line',
+    data: { labels: sems.map(s => 'Sem ' + s), datasets: [
+      { label: 'Pass %', data: passData, borderColor: '#2d6a4f', backgroundColor: 'rgba(45,106,79,0.07)', tension: 0.3, pointRadius: 5, yAxisID: 'y' },
+      { label: 'Avg GPA', data: gpaData, borderColor: '#1e3a5f', backgroundColor: 'rgba(30,58,95,0.07)', tension: 0.3, pointRadius: 5, yAxisID: 'y2', borderDash: [5,3] }
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: {
+        y: { min: 0, max: 100, position: 'left', ticks: { callback: v => v + '%', font: { size: 11 } } },
+        y2: { min: 0, max: 10, position: 'right', ticks: { font: { size: 11 } }, grid: { drawOnChartArea: false } },
+        x: { ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── BATCH CARDS ────────────────────────────────────────────────────────────────
+function renderBatchCards() {
+  let batches = [...BATCHES];
+  const sort = document.getElementById('batch-sort').value;
+  if (sort === 'pass') batches.sort((a, b) => batchStats(b).passRate - batchStats(a).passRate);
+  else if (sort === 'count') batches.sort((a, b) => batchStudents(b).length - batchStudents(a).length);
+
+  document.getElementById('batch-grid').innerHTML = batches.map(b => {
+    const bs = batchStats(b);
+    const pr = bs.passRate;
+    const color = barColor(pr);
+    const sems = Object.keys(SEM_STATS[b] || {}).length;
+    const top = batchStudents(b).filter(s => s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa)[0];
+    const topStr = top ? ('<span class="pill pill-blue">Top: ' + top.name.split(' ')[0] + ' (' + top.avg_gpa.toFixed(2) + ')</span>') : '';
+    const acStr = bs.ac > 0 ? ('<span class="pill pill-green">' + bs.ac + ' all-clear</span>') : '';
+    return '<div class="batch-card">' +
+      '<div class="batch-card-head"><div><div class="batch-year">Batch ' + b + '</div>' +
+      '<div style="font-size:0.73rem;color:var(--text3);margin-top:2px">' + sems + ' semester(s) data</div></div>' +
+      '<div><div class="batch-count">' + bs.total + '</div><div class="batch-lbl">students</div></div></div>' +
+      '<div class="bar-bg"><div class="bar-fill" style="width:' + pr + '%;background:' + color + '"></div></div>' +
+      '<div class="bar-meta"><span>Pass rate</span><span style="font-weight:600;color:' + color + '">' + pr + '%</span></div>' +
+      '<div class="bar-meta" style="margin-top:4px"><span>All-clear: ' + bs.ac + '</span><span>Avg GPA: ' + bs.avgGpa + '</span></div>' +
+      '<div class="batch-pills"><span class="pill ' + pillClass(pr) + '">' + passLabel(pr) + '</span>' + acStr + topStr + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// ── STUDENTS TABLE ─────────────────────────────────────────────────────────────
+let filteredStudents = [], currentPage = 1;
+const PAGE_SIZE = 50;
+function filterStudents() {
+  const batch = document.getElementById('st-batch').value;
+  const status = document.getElementById('st-status').value;
+  const gpaMin = parseFloat(document.getElementById('st-gpa').value) || 0;
+  const q = (document.getElementById('st-search').value || '').toLowerCase();
+  filteredStudents = STUDENTS.filter(s => {
+    if (batch && s.batch !== batch) return false;
+    if (status === 'allclear' && !s.all_clear) return false;
+    if (status === 'arrear' && s.all_clear) return false;
+    if (gpaMin && s.avg_gpa < gpaMin) return false;
+    if (q && !s.name.toLowerCase().includes(q) && !s.reg.includes(q)) return false;
+    return true;
+  }).sort((a, b) => b.avg_gpa - a.avg_gpa);
+  currentPage = 1;
+  renderStudentsTable();
+}
+function renderStudentsTable() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredStudents.slice(start, start + PAGE_SIZE);
+  const total = filteredStudents.length;
+  document.getElementById('st-count').textContent =
+    'Showing ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' of ' + total + ' students';
+  document.getElementById('st-tbody').innerHTML = page.map((s, i) => {
+    const rank = start + i + 1;
+    const gc = gpaColor(s.avg_gpa);
+    const gp = (s.avg_gpa / 10 * 100).toFixed(0);
+    const rk = rank <= 3 ? 'rank-' + rank : 'rank-n';
+    return '<tr>' +
+      '<td><span class="rank ' + rk + '">' + rank + '</span></td>' +
+      '<td class="mono">' + s.reg + '</td>' +
+      '<td style="font-weight:500">' + (s.name || '—') + '</td>' +
+      '<td><span class="pill pill-blue">' + s.batch + '</span></td>' +
+      '<td style="color:var(--text2)">' + s.sem_count + '</td>' +
+      '<td><div class="gpa-bar"><div class="gpa-track"><div class="gpa-fill" style="width:' + gp + '%;background:' + gc + '"></div></div>' +
+      '<span class="gpa-num" style="color:' + gc + '">' + s.avg_gpa.toFixed(2) + '</span></div></td>' +
+      '<td><span class="sp ' + (s.all_clear ? 'sp-pass' : 'sp-fail') + '">' + (s.all_clear ? 'All-clear' : 'Arrears') + '</span></td>' +
+      '</tr>';
+  }).join('');
+  renderPagination();
+}
+function renderPagination() {
+  const pages = Math.ceil(filteredStudents.length / PAGE_SIZE);
+  if (pages <= 1) { document.getElementById('st-pages').innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= Math.min(pages, 12); i++)
+    html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+  if (pages > 12) html += '<span class="page-info">… ' + pages + ' pages</span>';
+  document.getElementById('st-pages').innerHTML = html;
+}
+function goPage(p) { currentPage = p; renderStudentsTable(); window.scrollTo(0,200); }
+
+// ── TOPPERS ────────────────────────────────────────────────────────────────────
+function renderToppers() {
+  const batch = document.getElementById('top-batch').value;
+  const n = parseInt(document.getElementById('top-n').value);
+  const medals = ['🥇','🥈','🥉','4','5','6','7','8','9','10'];
+  const mc = ['medal-1','medal-2','medal-3'];
+  let html = '';
+  const batches = batch ? [batch] : BATCHES;
+  batches.forEach(b => {
+    const top = batchStudents(b).filter(s => s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa).slice(0, n);
+    if (!top.length) return;
+    html += '<div style="margin-bottom:2rem"><div class="sec-hd"><div class="sec-title">Batch ' + b + ' — Top ' + n + ' Students</div></div>' +
+      '<div class="top-grid">' +
+      top.map((s, i) => {
+        const mcls = i < 3 ? mc[i] : 'medal-n';
+        return '<div class="top-card">' +
+          '<div class="medal ' + mcls + '">' + medals[i] + '</div>' +
+          '<div><div class="top-name">' + (s.name || '—') + '</div>' +
+          '<div class="top-reg">' + s.reg + '</div>' +
+          '<div class="top-gpa">' + s.avg_gpa.toFixed(2) + '</div>' +
+          '<div class="top-gpa-lbl">Avg GPA &middot; ' + s.sem_count + ' sem &middot; ' + (s.all_clear ? 'All-clear' : 'Arrears') + '</div>' +
+          '</div></div>';
+      }).join('') + '</div></div>';
+  });
+  document.getElementById('toppers-area').innerHTML = html || '<div class="empty-state">No data available</div>';
+}
+
+// ── PDF UTILITIES ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function pdfHdr(doc, title, sub) {
+  doc.setFillColor(30, 58, 95);
+  doc.rect(0, 0, 210, 30, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('MAM College of Engineering and Technology', 14, 10);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+  doc.text('B.E. Mechanical Engineering — Dept Code 114 | Anna University', 14, 16);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+  doc.text(title, 14, 24);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5);
+  doc.text(sub + ' | Generated: ' + new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}), 14, 34);
+  doc.setFont('helvetica', 'normal');
+  return 38;
+}
+const { jsPDF } = window.jspdf;
+const HEAD_STYLE = { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 8 };
+const ALT_STYLE = { fillColor: [245, 242, 238] };
+const TBL_STYLE = { fontSize: 8.5, cellPadding: 3 };
+
+function mkPDF(title, sub, head, body, filename, landscape) {
+  showToast('Generating PDF...');
+  setTimeout(() => {
+    const doc = landscape ? new jsPDF('landscape') : new jsPDF();
+    const y = pdfHdr(doc, title, sub);
+    doc.autoTable({ startY: y, margin: { left: 14, right: 14 },
+      head: [head], body, styles: TBL_STYLE, headStyles: HEAD_STYLE, alternateRowStyles: ALT_STYLE });
+    doc.save(filename);
+    showToast('Downloaded: ' + filename);
+  }, 100);
+}
+
+// ── REPORTS ────────────────────────────────────────────────────────────────────
+function report_allclear() {
+  showToast('Generating...');
+  setTimeout(() => {
+    const doc = new jsPDF();
+    let y = pdfHdr(doc, 'All-Clear Students Report', 'Students who passed all semesters with no arrears');
+    BATCHES.forEach(b => {
+      const st = batchStudents(b).filter(s => s.all_clear && s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa);
+      if (!st.length) return;
+      if (y > 248) { doc.addPage(); y = 15; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(30, 58, 95);
+      doc.text('Batch ' + b + ' — ' + st.length + ' all-clear student(s)', 14, y); y += 4;
+      doc.setTextColor(0, 0, 0);
+      doc.autoTable({ startY: y, margin: { left: 14, right: 14 },
+        head: [['#', 'Register No.', 'Student Name', 'Sems', 'Avg GPA']],
+        body: st.map((s, i) => [i + 1, s.reg, s.name || '—', s.sem_count, s.avg_gpa.toFixed(2)]),
+        styles: TBL_STYLE, headStyles: HEAD_STYLE, alternateRowStyles: ALT_STYLE,
+        didParseCell: d => { if (d.section === 'body' && d.column.index === 4 && parseFloat(d.cell.text) >= 8) d.cell.styles.textColor = [45, 106, 79]; }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    });
+    const cnt = STUDENTS.filter(s => s.all_clear).length;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+    if (y < 280) doc.text('Total all-clear: ' + cnt + ' of ' + STUDENTS.length + ' students', 14, y);
+    doc.save('MAM_ME_AllClear_Students.pdf');
+    showToast('Downloaded!');
+  }, 100);
+}
+
+function report_highgpa() {
+  showToast('Generating...');
+  setTimeout(() => {
+    const doc = new jsPDF();
+    let y = pdfHdr(doc, 'High Performers — GPA >= 7.5', 'Students with cumulative avg GPA of 7.5 and above');
+    BATCHES.forEach(b => {
+      const st = batchStudents(b).filter(s => s.avg_gpa >= 7.5).sort((a, c) => c.avg_gpa - a.avg_gpa);
+      if (!st.length) return;
+      if (y > 248) { doc.addPage(); y = 15; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(30, 58, 95);
+      doc.text('Batch ' + b + ' — ' + st.length + ' student(s) with GPA >= 7.5', 14, y); y += 4;
+      doc.setTextColor(0, 0, 0);
+      doc.autoTable({ startY: y, margin: { left: 14, right: 14 },
+        head: [['#', 'Register No.', 'Student Name', 'Batch', 'Sems', 'Avg GPA', 'Status']],
+        body: st.map((s, i) => [i + 1, s.reg, s.name || '—', s.batch, s.sem_count, s.avg_gpa.toFixed(2), s.all_clear ? 'All-Clear' : 'Arrears']),
+        styles: TBL_STYLE, headStyles: HEAD_STYLE, alternateRowStyles: ALT_STYLE
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    });
+    doc.save('MAM_ME_HighGPA_7_5.pdf');
+    showToast('Downloaded!');
+  }, 100);
+}
+
+function report_top3() {
+  const rows = [];
+  BATCHES.forEach(b => {
+    const top = batchStudents(b).filter(s => s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa).slice(0, 3);
+    top.forEach((s, i) => rows.push([b, ['1st','2nd','3rd'][i], s.reg, s.name || '—', s.sem_count, s.avg_gpa.toFixed(2), s.all_clear ? 'All-Clear' : 'Arrears']));
+  });
+  mkPDF('Top 3 Students per Batch', 'Gold, silver and bronze performers by average GPA',
+    ['Batch','Rank','Register No.','Student Name','Sems','Avg GPA','Status'], rows, 'MAM_ME_Top3_PerBatch.pdf');
+}
+
+function report_outstanding() {
+  const st = STUDENTS.filter(s => s.avg_gpa >= 9).sort((a, b) => b.avg_gpa - a.avg_gpa);
+  mkPDF('Outstanding Students — GPA >= 9.0', st.length + ' students with exceptional academic performance',
+    ['Rank','Register No.','Student Name','Batch','Sems','Avg GPA','Status'],
+    st.map((s, i) => [i+1, s.reg, s.name||'—', s.batch, s.sem_count, s.avg_gpa.toFixed(2), s.all_clear?'All-Clear':'Arrears']),
+    'MAM_ME_Outstanding_GPA9.pdf');
+}
+
+function report_arrear() {
+  showToast('Generating...');
+  setTimeout(() => {
+    const doc = new jsPDF();
+    let y = pdfHdr(doc, 'Students with Arrears', 'Failed at least one semester examination');
+    const hs = { fillColor: [192, 57, 43], textColor: 255, fontStyle: 'bold', fontSize: 8 };
+    BATCHES.forEach(b => {
+      const st = batchStudents(b).filter(s => !s.all_clear && s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa);
+      if (!st.length) return;
+      if (y > 248) { doc.addPage(); y = 15; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(192, 57, 43);
+      doc.text('Batch ' + b + ' — ' + st.length + ' student(s) with arrears', 14, y); y += 4;
+      doc.setTextColor(0, 0, 0);
+      doc.autoTable({ startY: y, margin: { left: 14, right: 14 },
+        head: [['#', 'Register No.', 'Student Name', 'Sems', 'Avg GPA']],
+        body: st.map((s, i) => [i + 1, s.reg, s.name || '—', s.sem_count, s.avg_gpa.toFixed(2)]),
+        styles: TBL_STYLE, headStyles: hs, alternateRowStyles: { fillColor: [255, 245, 245] }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    });
+    doc.save('MAM_ME_Arrear_Students.pdf');
+    showToast('Downloaded!');
+  }, 100);
+}
+
+function report_semwise() {
+  const rows = [];
+  BATCHES.forEach(b => {
+    [1,2,3,4,5,6,7,8].forEach(s => {
+      const d = (SEM_STATS[b] || {})[s]; if (!d) return;
+      rows.push([b, 'Sem ' + s, d.total, d.passed, d.total - d.passed, d.pass_pct + '%', d.avg_gpa.toFixed(2)]);
+    });
+  });
+  mkPDF('Semester-wise Pass/Fail Summary', 'Consolidated performance across all batches and semesters',
+    ['Batch','Semester','Students','Passed','Failed','Pass %','Avg GPA'], rows, 'MAM_ME_SemesterWise.pdf', true);
+}
+
+function report_batchwise() {
+  const rows = BATCHES.map(b => {
+    const bs = batchStats(b);
+    const top = batchStudents(b).filter(s => s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa)[0];
+    return [b, bs.total, bs.ac, bs.totalApp, bs.passRate + '%', bs.avgGpa.toFixed(2),
+      top ? top.name.substring(0, 22) : '—', top ? top.avg_gpa.toFixed(2) : '—'];
+  });
+  mkPDF('Batch-wise Consolidated Report', 'Academic snapshot for each joining batch',
+    ['Batch','Students','All-Clear','Exams','Pass Rate','Avg GPA','Top Performer','Top GPA'], rows, 'MAM_ME_BatchWise.pdf');
+}
+
+function report_gpa_dist() {
+  const valid = STUDENTS.filter(s => s.avg_gpa > 0);
+  const total = valid.length;
+  const bands = [
+    ['>= 9.0 (Outstanding - O)', valid.filter(s => s.avg_gpa >= 9).length],
+    ['8.0 – 8.99 (Excellent - A+)', valid.filter(s => s.avg_gpa >= 8 && s.avg_gpa < 9).length],
+    ['7.5 – 7.99 (Very Good - A)', valid.filter(s => s.avg_gpa >= 7.5 && s.avg_gpa < 8).length],
+    ['7.0 – 7.49 (Good - B+)', valid.filter(s => s.avg_gpa >= 7 && s.avg_gpa < 7.5).length],
+    ['6.0 – 6.99 (Average - B)', valid.filter(s => s.avg_gpa >= 6 && s.avg_gpa < 7).length],
+    ['5.0 – 5.99 (Below Avg - C)', valid.filter(s => s.avg_gpa >= 5 && s.avg_gpa < 6).length],
+    ['< 5.0 (Low)', valid.filter(s => s.avg_gpa > 0 && s.avg_gpa < 5).length],
+  ];
+  mkPDF('GPA Distribution Report', 'Student count across GPA performance bands | Total: ' + total,
+    ['GPA Range', 'Student Count', 'Percentage'],
+    bands.map(([r, c]) => [r, c, (c / total * 100).toFixed(1) + '%']),
+    'MAM_ME_GPA_Distribution.pdf');
+}
+
+function exportFilteredPDF() {
+  const hdr = ['#','Register No.','Name','Batch','Sems','Avg GPA','Status'];
+  const body = filteredStudents.map((s, i) => [i+1, s.reg, s.name||'—', s.batch, s.sem_count, s.avg_gpa.toFixed(2), s.all_clear?'All-Clear':'Arrears']);
+  mkPDF('Custom Filtered Student List', filteredStudents.length + ' students matching selected filters',
+    hdr, body, 'MAM_ME_Filtered.pdf');
+}
+
+function exportToppersPDF() {
+  const batch = document.getElementById('top-batch').value;
+  const n = parseInt(document.getElementById('top-n').value);
+  const rows = [];
+  const batches = batch ? [batch] : BATCHES;
+  batches.forEach(b => {
+    const top = batchStudents(b).filter(s => s.avg_gpa > 0).sort((a, c) => c.avg_gpa - a.avg_gpa).slice(0, n);
+    top.forEach((s, i) => rows.push([b, i+1, s.reg, s.name||'—', s.sem_count, s.avg_gpa.toFixed(2), s.all_clear?'All-Clear':'Arrears']));
+  });
+  mkPDF('Top ' + n + ' Students' + (batch ? ' — Batch ' + batch : ' — All Batches'),
+    'Ranked by cumulative average GPA',
+    ['Batch','Rank','Register No.','Student Name','Sems','Avg GPA','Status'], rows, 'MAM_ME_Toppers.pdf');
+}
+
+function report_custom() {
+  const batch = document.getElementById('rpt-batch').value;
+  const filter = document.getElementById('rpt-filter').value;
+  let st = batchStudents(batch);
+  if (filter === 'allclear') st = st.filter(s => s.all_clear);
+  else if (['7.5','8','9'].includes(filter)) st = st.filter(s => s.avg_gpa >= parseFloat(filter));
+  st = st.filter(s => s.avg_gpa > 0).sort((a, b) => b.avg_gpa - a.avg_gpa);
+  const sub = (batch ? 'Batch ' + batch : 'All batches') + ' | Filter: ' + filter + ' | ' + st.length + ' students';
+  mkPDF('Custom Report', sub,
+    ['#','Register No.','Student Name','Batch','Sems','Avg GPA','Status'],
+    st.map((s, i) => [i+1, s.reg, s.name||'—', s.batch, s.sem_count, s.avg_gpa.toFixed(2), s.all_clear?'All-Clear':'Arrears']),
+    'MAM_ME_Custom.pdf');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  populateSelects();
+  renderOverview();
+  filterStudents();
+});
+</script>
+</body>
+</html>
